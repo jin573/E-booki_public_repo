@@ -6,22 +6,22 @@ import lombok.*;
 @Getter
 @NoArgsConstructor
 @Entity
-@Table(name="user")
+@Table(name="users")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     @Column(name = "email", length = 100)
     private String email;
-    @Setter //비밀번호는 변경 가능
+
     @Column(name = "password", length = 100)
     private String password;
 
-    @Setter //닉네임은 변경 가능
+
     @Column(name = "nickname", length = 100)
     private String nickname;
 
-    @Setter //프로필은 변경 가능
+
     @Column(name = "profile_image", length = 500)
     private String profileImage;
 
@@ -32,6 +32,18 @@ public class User {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
+        this.profileImage = profileImage;
+    }
+
+    public void updatePassword(String password){
+        this.password = password;
+    }
+
+    public void updateNickname(String nickname){
+        this.nickname = nickname;
+    }
+
+    public void updateProfileImage(String profileImage){
         this.profileImage = profileImage;
     }
 }
