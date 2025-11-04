@@ -1,8 +1,13 @@
 package com.be.ebooki.dto;
 
 import com.be.ebooki.domain.User;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 public class UserRequest {
@@ -10,9 +15,16 @@ public class UserRequest {
     //유저 요청
     @Getter
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class UserSignupDTO{
+        @NotBlank
+        @Email
         private String email;
+        @NotBlank
+        @Size(min = 6)
         private String password;
+        @NotBlank
         private String nickname;
         private String profileImage;
 
@@ -29,8 +41,14 @@ public class UserRequest {
     //유저 로그인
     @Getter
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class UserLoginDTO{
+        @NotBlank
+        @Email()
         private String email;
+        @NotBlank
+        @Size(min = 6)
         private String password;
     }
 }
