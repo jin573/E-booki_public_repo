@@ -1,8 +1,10 @@
 package com.be.ebooki.dto;
 
 import com.be.ebooki.domain.User;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 public class UserResponse {
@@ -45,5 +47,14 @@ public class UserResponse {
         private String refreshToken;
         private UserInfoDTO userInfoDTO;
 
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TokenReissueDTO {
+        private String accessToken;
+        private String refreshToken;
     }
 }

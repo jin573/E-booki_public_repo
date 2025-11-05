@@ -6,11 +6,10 @@ import com.be.ebooki.dto.UserResponse;
 import com.be.ebooki.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/auth")
@@ -33,6 +32,45 @@ public class UserController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    //log in
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@Valid @RequestBody UserRequest.UserLoginDTO userLoginDTO){
+        //로그인 정보, 토큰 정보, 응답 코드 가져오기
+        UserResponse.UserLoginDTO loginUser = userService.loginUser(userLoginDTO);
+
+        UserResponse.UserResponseDTO<UserResponse.UserLoginDTO> responseDTO = UserResponse.UserResponseDTO.<UserResponse.UserLoginDTO>builder()
+                .statusCode(200)
+                .message("로그인 성공")
+                .data(loginUser)
+                .build();
+
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<?> reissueToken(@RequestBody UserRequest.TokenReissueDTO tokenReissueDTO) {
+        UserResponse.TokenReissueDTO newToken = userService.reissueToken(tokenReissueDTO);
+
+        UserResponse.UserResponseDTO<UserResponse.TokenReissueDTO> responseDTO =
+                UserResponse.UserResponseDTO.<UserResponse.TokenReissueDTO>builder()
+                        .statusCode(200)
+                        .message("Access Token 재발급 성공")
+                        .data(newToken)
+                        .build();
+
+        return ResponseEntity.ok(responseDTO);
+    }
 
 
+    //get all user
+    @GetMapping("/users")
+    public ResponseEntity<List<UserResponse.UserInfoDTO>> getAllUsers(){
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    //test
+    @GetMapping("/test")
+    public ResponseEntity<String> testUser() {
+        return ResponseEntity.ok("접근 성공");
+    }
 }

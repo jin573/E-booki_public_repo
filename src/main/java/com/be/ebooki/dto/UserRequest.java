@@ -51,4 +51,13 @@ public class UserRequest {
         @Size(min = 6)
         private String password;
     }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TokenReissueDTO {
+        private String accessToken;
+        private String refreshToken;
+    }
 }
