@@ -29,7 +29,8 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/signup", "/auth/login", "/auth/reissue").permitAll()
+                        .requestMatchers("/auth/signup", "/auth/login", "/auth/reissue"
+                        ,"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/auth/**").authenticated() // test 같은 건 인증 필요
                         .requestMatchers("/api/books/**").authenticated()
                         .anyRequest().authenticated()

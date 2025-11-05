@@ -30,7 +30,8 @@ public class JwtFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         //회원가입과 로그인은 누구나 접근
-        if (path.contains("/auth/signup") || path.contains("/auth/login") || path.contains("/auth/reissue")) {
+        if (path.contains("/auth/signup") || path.contains("/auth/login") || path.contains("/auth/reissue")
+                || path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui") || path.startsWith("/swagger-ui.html")) {
             filterChain.doFilter(request, response);
             return;
         }
