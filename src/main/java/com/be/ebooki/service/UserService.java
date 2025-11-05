@@ -23,9 +23,9 @@ public class UserService {
     private final JwtTokenProvider jwtTokenProvider;
 
     //sign up
-    public UserResponse.UserInfoDTO signupUser(UserRequest.UserSignupDTO signupDTO){
+    public UserResponse.UserInfoDTO signupUser(UserRequest.UserSignupDTO signupDTO) {
         //이메일 중복 검사하기
-        if(userRepository.existsByEmail(signupDTO.getEmail())){
+        if (userRepository.existsByEmail(signupDTO.getEmail())) {
             throw new IllegalArgumentException("이미 존재하는 계정입니다.");
         }
 
@@ -43,7 +43,7 @@ public class UserService {
     public UserResponse.UserLoginDTO loginUser(UserRequest.UserLoginDTO userLoginDTO) {
         //내부에서 아이디로 정보 찾기 -> userInfo에 담기 ->토큰 생성해서 loginDTO에 담기
         //이메일 존재 유무 검사
-        if(!(userRepository.existsByEmail(userLoginDTO.getEmail()))){
+        if (!(userRepository.existsByEmail(userLoginDTO.getEmail()))) {
             throw new IllegalArgumentException("존재하지 않는 계정입니다.");
         }
         //비밀번호 틀린 로직
@@ -68,8 +68,20 @@ public class UserService {
                 .build();
     }
 
+    public void logoutUser(String email) {
+
+    }
+
+    public void deleteUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다."));
+        userRepository.delete(user);
+
+    }
+
+
     //get all users
-    public List<UserResponse.UserInfoDTO> getAllUsers(){
+    public List<UserResponse.UserInfoDTO> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(user -> UserResponse.UserInfoDTO.builder()
                         .id(user.getId())
@@ -80,6 +92,7 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    //reissue
     public UserResponse.TokenReissueDTO reissueToken(UserRequest.TokenReissueDTO tokenReissueDTO) {
         String refreshToken = tokenReissueDTO.getRefreshToken();
 
@@ -107,5 +120,5 @@ public class UserService {
                 .refreshToken(refreshToken)
                 .build();
     }
-
 }
+

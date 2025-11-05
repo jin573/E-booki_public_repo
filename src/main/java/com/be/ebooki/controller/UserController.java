@@ -1,5 +1,6 @@
 package com.be.ebooki.controller;
 
+import com.be.ebooki.config.jwt.JwtTokenProvider;
 import com.be.ebooki.domain.User;
 import com.be.ebooki.dto.UserRequest;
 import com.be.ebooki.dto.UserResponse;
@@ -17,7 +18,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-
+    private final JwtTokenProvider jwtTokenProvider;
     //sign up
     @PostMapping("/signup")
     public ResponseEntity<?> signupUser(@Valid @RequestBody UserRequest.UserSignupDTO userSignupDTO) {
@@ -61,6 +62,32 @@ public class UserController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logoutUser(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7);
+        String email = jwtTokenProvider.getEmailFromToken(token);
+        userService.logoutUser(email);
+
+        return ResponseEntity.ok(
+                UserResponse.UserResponseDTO.builder()
+                        .statusCode(200)
+                        .message("로그아웃 완료")
+                        .build()
+        );
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> withdrawUser(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7);
+        String email = jwtTokenProvider.getEmailFromToken(token);
+        userService.deleteUser(email);
+        return ResponseEntity.ok(
+                UserResponse.UserResponseDTO.builder()
+                        .statusCode(200)
+                        .message("회원 탈퇴 완료")
+                        .build()
+        );
+    }
 
     //get all user
     @GetMapping("/users")
