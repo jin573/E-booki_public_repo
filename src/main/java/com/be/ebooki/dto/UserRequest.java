@@ -24,15 +24,12 @@ public class UserRequest {
         @NotBlank
         @Size(min = 6)
         private String password;
-        @NotBlank
-        private String nickname;
         private String profileImage;
 
         public User toEntity(){
             return User.builder()
                     .email(this.email)
                     .password(this.password)
-                    .nickname(this.nickname)
                     .profileImage(this.profileImage)
                     .build();
         }

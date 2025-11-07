@@ -8,6 +8,7 @@ import com.be.ebooki.dto.KakaoResponse;
 import com.be.ebooki.dto.UserRequest;
 import com.be.ebooki.dto.UserResponse;
 import com.be.ebooki.repository.UserRepository;
+import com.be.ebooki.util.Nickname;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,11 +35,14 @@ public class UserService {
             throw new IllegalArgumentException("이미 존재하는 계정입니다.");
         }
 
+        //닉네임 생성
+        String randomNickname = generateNickname();
         //비밀번호 암호화
         String encodePassword = passwordEncoder.encode(signupDTO.getPassword());
 
         //Entity로 변환 후 저장
         User user = signupDTO.toEntity();
+        user.updateNickname(randomNickname);
         user.updatePassword(encodePassword);//비밀번호를 암호화하여 업데이트
         User registeredUser = userRepository.save(user);
 
@@ -130,18 +134,23 @@ public class UserService {
         //토큰 요청
         KakaoResponse.OAuthToken oAuthToken = kakaoProperties.requestToken(accessCode);
         System.out.println("oAuthToken = " + oAuthToken);
+        //관련 정보 가져오기
         KakaoResponse.KakaoProfile kakaoProfile = kakaoProperties.requestProfile(oAuthToken);
         System.out.println("kakaoProfile = " + kakaoProfile);
 
+        //이메일 가져오기
         String email = kakaoProfile.getKakaoAccount().getEmail();
 
         //이메일 존재하는지 확인 -> 없으면 계정 생성 후 로그인까지
         User user = userRepository.findByEmail(email)
                 .orElseGet(() -> createNewUser(kakaoProfile));
 
+        //토큰 및 닉네임 설정
         String accessToken = jwtTokenProvider.generateToken(user.getEmail(), user.getId(), jwtProperties.getAccessTokenExpiration());
         String refreshToken = jwtTokenProvider.generateToken(user.getEmail(), user.getId(), jwtProperties.getRefreshTokenExpiration());
-
+        if (user.getNickname() == null || user.getNickname().isEmpty()) {
+            user.updateNickname(generateNickname());
+        }
         httpServletResponse.setHeader("Authorization", accessToken);
 
         //userInfoDTO 생성
@@ -155,22 +164,17 @@ public class UserService {
     }
 
     private User createNewUser(KakaoResponse.KakaoProfile kakaoProfile) {
-        String nickname = null;
-        if (kakaoProfile.getKakaoAccount() != null &&
-                kakaoProfile.getKakaoAccount().getProfile() != null) {
-            nickname = kakaoProfile.getKakaoAccount().getProfile().getNickname();
-        } else {
-            nickname = "행복한 꾸부기"; // 혹은 다른 fallback 처리
-        }
-
         User newUser = new User(
                 kakaoProfile.getKakaoAccount().getEmail(),
                 passwordEncoder.encode(UUID.randomUUID().toString()),
-                nickname,
-                "url"
+                generateNickname(),
+                "url" //추후 default url로 변경
         );
         return userRepository.save(newUser);
     }
 
 
+    private String generateNickname() {
+        return Nickname.Adjective.random() + " " + Nickname.Noun.random();
+    }
 }
