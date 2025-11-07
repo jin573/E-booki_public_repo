@@ -1,16 +1,19 @@
 package com.be.ebooki.service;
 
+import com.be.ebooki.config.KakaoProperties;
 import com.be.ebooki.config.jwt.JwtProperties;
 import com.be.ebooki.config.jwt.JwtTokenProvider;
 import com.be.ebooki.domain.User;
+import com.be.ebooki.dto.KakaoResponse;
 import com.be.ebooki.dto.UserRequest;
 import com.be.ebooki.dto.UserResponse;
 import com.be.ebooki.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,6 +24,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProperties jwtProperties;
     private final JwtTokenProvider jwtTokenProvider;
+
+    private final KakaoProperties kakaoProperties;
 
     //sign up
     public UserResponse.UserInfoDTO signupUser(UserRequest.UserSignupDTO signupDTO) {
@@ -120,5 +125,52 @@ public class UserService {
                 .refreshToken(refreshToken)
                 .build();
     }
-}
 
+    public UserResponse.UserLoginDTO kakaoLogin(String accessCode, HttpServletResponse httpServletResponse) {
+        //토큰 요청
+        KakaoResponse.OAuthToken oAuthToken = kakaoProperties.requestToken(accessCode);
+        System.out.println("oAuthToken = " + oAuthToken);
+        KakaoResponse.KakaoProfile kakaoProfile = kakaoProperties.requestProfile(oAuthToken);
+        System.out.println("kakaoProfile = " + kakaoProfile);
+
+        String email = kakaoProfile.getKakaoAccount().getEmail();
+
+        //이메일 존재하는지 확인 -> 없으면 계정 생성 후 로그인까지
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> createNewUser(kakaoProfile));
+
+        String accessToken = jwtTokenProvider.generateToken(user.getEmail(), user.getId(), jwtProperties.getAccessTokenExpiration());
+        String refreshToken = jwtTokenProvider.generateToken(user.getEmail(), user.getId(), jwtProperties.getRefreshTokenExpiration());
+
+        httpServletResponse.setHeader("Authorization", accessToken);
+
+        //userInfoDTO 생성
+        UserResponse.UserInfoDTO userInfoDTO = UserResponse.UserInfoDTO.from(user);
+
+        return UserResponse.UserLoginDTO.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .userInfoDTO(userInfoDTO)
+                .build();
+    }
+
+    private User createNewUser(KakaoResponse.KakaoProfile kakaoProfile) {
+        String nickname = null;
+        if (kakaoProfile.getKakaoAccount() != null &&
+                kakaoProfile.getKakaoAccount().getProfile() != null) {
+            nickname = kakaoProfile.getKakaoAccount().getProfile().getNickname();
+        } else {
+            nickname = "행복한 꾸부기"; // 혹은 다른 fallback 처리
+        }
+
+        User newUser = new User(
+                kakaoProfile.getKakaoAccount().getEmail(),
+                passwordEncoder.encode(UUID.randomUUID().toString()),
+                nickname,
+                "url"
+        );
+        return userRepository.save(newUser);
+    }
+
+
+}

@@ -5,6 +5,7 @@ import com.be.ebooki.domain.User;
 import com.be.ebooki.dto.UserRequest;
 import com.be.ebooki.dto.UserResponse;
 import com.be.ebooki.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +43,19 @@ public class UserController {
         UserResponse.UserResponseDTO<UserResponse.UserLoginDTO> responseDTO = UserResponse.UserResponseDTO.<UserResponse.UserLoginDTO>builder()
                 .statusCode(200)
                 .message("로그인 성공")
+                .data(loginUser)
+                .build();
+
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @GetMapping("/login/kakao")
+    public ResponseEntity<?> kakaoLogin(@RequestParam("code") String accessCode, HttpServletResponse httpServletResponse) {
+        UserResponse.UserLoginDTO loginUser = userService.kakaoLogin(accessCode, httpServletResponse);
+
+        UserResponse.UserResponseDTO<UserResponse.UserLoginDTO> responseDTO = UserResponse.UserResponseDTO.<UserResponse.UserLoginDTO>builder()
+                .statusCode(200)
+                .message("카카오 로그인 성공")
                 .data(loginUser)
                 .build();
 
