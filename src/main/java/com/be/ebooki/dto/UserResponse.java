@@ -1,6 +1,7 @@
 package com.be.ebooki.dto;
 
 import com.be.ebooki.domain.User;
+import com.be.ebooki.enums.UserType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,12 +29,14 @@ public class UserResponse {
         private String email;
         private String nickname;
         private String profileImage;
+        private UserType userType;
         public static UserInfoDTO from(User user) {
             return UserInfoDTO.builder()
                     .id(user.getId())
                     .email(user.getEmail())
                     .nickname(user.getNickname())
                     .profileImage(user.getProfileImage())
+                    .userType(user.getUserType())
                     .build();
         }
 

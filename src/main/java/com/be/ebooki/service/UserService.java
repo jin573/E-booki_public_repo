@@ -8,7 +8,8 @@ import com.be.ebooki.dto.KakaoResponse;
 import com.be.ebooki.dto.UserRequest;
 import com.be.ebooki.dto.UserResponse;
 import com.be.ebooki.repository.UserRepository;
-import com.be.ebooki.util.Nickname;
+import com.be.ebooki.enums.Nickname;
+import com.be.ebooki.enums.UserType;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,6 +45,7 @@ public class UserService {
         User user = signupDTO.toEntity();
         user.updateNickname(randomNickname);
         user.updatePassword(encodePassword);//비밀번호를 암호화하여 업데이트
+        user.updateUserType(UserType.LOCAL);//유저 타입 지정
         User registeredUser = userRepository.save(user);
 
         return UserResponse.UserInfoDTO.from(registeredUser);
@@ -133,11 +135,8 @@ public class UserService {
     public UserResponse.UserLoginDTO kakaoLogin(String accessCode, HttpServletResponse httpServletResponse) {
         //토큰 요청
         KakaoResponse.OAuthToken oAuthToken = kakaoProperties.requestToken(accessCode);
-        System.out.println("oAuthToken = " + oAuthToken);
         //관련 정보 가져오기
         KakaoResponse.KakaoProfile kakaoProfile = kakaoProperties.requestProfile(oAuthToken);
-        System.out.println("kakaoProfile = " + kakaoProfile);
-
         //이메일 가져오기
         String email = kakaoProfile.getKakaoAccount().getEmail();
 
@@ -151,7 +150,6 @@ public class UserService {
         if (user.getNickname() == null || user.getNickname().isEmpty()) {
             user.updateNickname(generateNickname());
         }
-        httpServletResponse.setHeader("Authorization", accessToken);
 
         //userInfoDTO 생성
         UserResponse.UserInfoDTO userInfoDTO = UserResponse.UserInfoDTO.from(user);
@@ -168,7 +166,8 @@ public class UserService {
                 kakaoProfile.getKakaoAccount().getEmail(),
                 passwordEncoder.encode(UUID.randomUUID().toString()),
                 generateNickname(),
-                "url" //추후 default url로 변경
+                "url",
+                UserType.KAKAO//추후 default url로 변경
         );
         return userRepository.save(newUser);
     }

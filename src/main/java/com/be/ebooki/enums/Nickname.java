@@ -1,4 +1,4 @@
-package com.be.ebooki.util;
+package com.be.ebooki.enums;
 
 import java.util.Random;
 
