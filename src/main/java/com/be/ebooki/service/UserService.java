@@ -12,6 +12,8 @@ import com.be.ebooki.enums.Nickname;
 import com.be.ebooki.enums.UserType;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -176,4 +178,23 @@ public class UserService {
     private String generateNickname() {
         return Nickname.Adjective.random() + " " + Nickname.Noun.random();
     }
+
+    public static Integer getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // 인증 객체가 없는 경우
+        if (authentication == null) {
+            throw new IllegalStateException("인증 정보가 존재하지 않습니다.");
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        //로그인 안 한 경우 or principal 타입이 Integer 아닐 경우
+        if (!(principal instanceof Integer)) {
+            throw new IllegalStateException("유효한 사용자 정보가 아닙니다.");
+        }
+
+        return (Integer) principal;
+    }
+
 }
