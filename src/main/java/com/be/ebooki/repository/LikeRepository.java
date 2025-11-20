@@ -10,4 +10,5 @@ import java.util.List;
 
 public interface LikeRepository extends JpaRepository<Like, Integer> {
     Optional<Like> findByUserAndBook(User user, Book book);
+    boolean existsByUserIdAndBookId(Integer userId, Integer bookId);
 }
