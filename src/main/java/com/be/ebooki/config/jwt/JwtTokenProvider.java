@@ -31,6 +31,7 @@ public class JwtTokenProvider {
                 .signWith(SignatureAlgorithm.HS256, jwtProperties.getSecretKey())
                 .compact();
     }
+    //토큰에서 이메일 가져오기
     public String getEmailFromToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(jwtProperties.getSecretKey())
@@ -38,6 +39,15 @@ public class JwtTokenProvider {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+    //토큰에서 아이디 가져오기
+    public Integer getUserIdFromToken(String token){
+        return Jwts.parserBuilder()
+                .setSigningKey(jwtProperties.getSecretKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("userId", Integer.class);
     }
 
 

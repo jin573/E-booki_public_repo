@@ -48,9 +48,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
             //유효성 검사
             if (jwtTokenProvider.validateToken(token)) {
-                String email = jwtTokenProvider.getEmailFromToken(token);
+                //String email = jwtTokenProvider.getEmailFromToken(token);
+                Integer userId = jwtTokenProvider.getUserIdFromToken(token);
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(email, null, AuthorityUtils.NO_AUTHORITIES);
+                        new UsernamePasswordAuthenticationToken(userId, null, AuthorityUtils.NO_AUTHORITIES);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
