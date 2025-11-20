@@ -45,6 +45,7 @@ public class TeamService {
                         .team(team)
                         .build()
         );
+        user.getTeamUsers().add(teamUser); //유저가 속한 팀을 조회하기 위해 추가
 
         return TeamResponse.TeamUserDTO.from(teamUser);
     }
