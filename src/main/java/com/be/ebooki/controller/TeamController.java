@@ -1,7 +1,9 @@
 package com.be.ebooki.controller;
 
+import com.be.ebooki.domain.Team;
 import com.be.ebooki.dto.TeamResponse;
 import com.be.ebooki.service.TeamService;
+import com.be.ebooki.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,23 +22,19 @@ public class TeamController {
 
     private final TeamService teamService;
 
+    private final UserService userService;
+
     @PostMapping("/{teamName}")
     public ResponseEntity<?> createTeam(@PathVariable String teamName){
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = (String) authentication.getPrincipal(); // 로그인한 유저 이메일
-        System.out.println(email);
+        Integer userId = userService.getCurrentUserId();
 
-        TeamResponse.TeamDTO teamDTO = teamService.createTeam(email, teamName);
-        TeamResponse.TeamUserDTO teamUserDTO = teamService.initTeam(email, teamDTO);
-
-        TeamResponse.TeamResponseDTO<TeamResponse.TeamDTO, TeamResponse.TeamUserDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamDTO, TeamResponse.TeamUserDTO>builder()
+        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.initTeam(userId, teamName);
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO>builder()
                 .statusCode(200)
-                .message("팀 생성 성공")
-                .teamData(teamDTO)
-                .teamUserData(teamUserDTO)
+                .message("팀 생성 성공 및 링크 생성 성공")
+                .data(teamInfoDTO)
                 .build();
-
         return ResponseEntity.ok(responseDTO);
     }
 

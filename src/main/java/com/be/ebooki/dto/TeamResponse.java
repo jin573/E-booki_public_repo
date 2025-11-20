@@ -14,11 +14,20 @@ public class TeamResponse {
 
     @Getter
     @Builder
-    public static class TeamResponseDTO<T1, T2>{
+    public static class TeamResponseDTO<T>{
         private int statusCode;
         private String message;
-        private T1 teamData;
-        private T2 teamUserData;
+
+        private T data;
+
+    }
+
+    @Getter
+    @Builder
+    public static class TeamInfoDTO{
+        private TeamDTO teamData;
+        private TeamUserDTO teamUserData;
+        private String inviteUrl;
     }
 
     @Getter
