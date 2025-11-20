@@ -14,6 +14,7 @@ public class BookResponse {
         private Integer id;
         private String title;
         private String bookImage;
+        private Double rating;
     }
 
     @Data
@@ -27,5 +28,7 @@ public class BookResponse {
         private Integer price;
         private String bookImage;
         private Double rating;
+
+        private boolean liked;
     }
 }
