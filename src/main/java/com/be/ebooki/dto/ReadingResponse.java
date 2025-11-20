@@ -10,26 +10,24 @@ public class ReadingResponse {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class EnterDTO {
+    public static class HighlightDTO {
+        private Integer id;
+        private Integer userId;
+        private Integer teamId;
         private Integer bookId;
-        private List<HighlightDTO> highlights;
+        private Integer spineIndex;
+        private String cfi;
+        private String text;
+        private String color;
     }
 
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class HighlightDTO {
-        private Integer id;
-        private Integer userId;
-        private Integer teamId;
-        private Integer spineIndex;
-        private String cfi;
-        private String text;
-        private String color;
-        private Long createdAt;
-
-        private List<CommentDTO> comments;
+    public static class HighlightListDTO {
+        private Integer bookId;
+        private List<HighlightDTO> highlights;
     }
 
     @Data
@@ -42,19 +40,15 @@ public class ReadingResponse {
         private Integer highlightId;
         private String text;
         private Long createdAt;
-
-        private List<EmoticonDTO> emoticons;
+        private EmoticonCountDTO emoticons;
     }
 
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class EmoticonDTO {
-        private Integer id;
-        private Integer userId;
-        private Integer commentId;
-        private String emoji;
-        private Long createdAt;
+    public static class EmoticonCountDTO {
+        private int likeCount;
+        private int cryCount;
     }
 }

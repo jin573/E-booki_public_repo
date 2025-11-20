@@ -30,8 +30,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/signup", "/auth/login", "/auth/reissue"
-                        ,"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
-                        ,"/auth/login/kakao/**").permitAll()
+                        ,"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/h2-console/**"
+                                ,"/auth/login/kakao/**").permitAll()
                         .requestMatchers("/auth/**").authenticated() // test 같은 건 인증 필요
                         .requestMatchers("/api/books/**").authenticated()
                         .anyRequest().authenticated()
@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .accessDeniedHandler((req, res, e) ->
                                 res.sendError(HttpServletResponse.SC_FORBIDDEN, "권한이 없습니다."))
                 )
+                .headers(headers -> headers.frameOptions().disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(formLogin->formLogin.disable())  // 폼 로그인 비활성화
                 .httpBasic(httpBasic -> httpBasic.disable()) // HTTP Basic 인증 비활성화
