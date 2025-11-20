@@ -22,6 +22,7 @@ public class BookController {
 
     @GetMapping("/{id}")
     public ResponseEntity<BookResponse.BookDetailDTO> getBookDetail(@PathVariable Integer id) {
+        //userId가져오기
         return ResponseEntity.ok(bookService.getBookDetail(id));
     }
 }

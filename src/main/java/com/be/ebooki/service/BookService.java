@@ -3,6 +3,7 @@ package com.be.ebooki.service;
 import com.be.ebooki.domain.Book;
 import com.be.ebooki.dto.BookResponse;
 import com.be.ebooki.repository.BookRepository;
+import com.be.ebooki.repository.LikeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final LikeRepository likeRepository;
 
     public List<BookResponse.BookListDTO> getAllBooks() {
         return bookRepository.findAll().stream()
@@ -21,6 +23,7 @@ public class BookService {
                         .id(book.getId())
                         .title(book.getTitle())
                         .bookImage(book.getBookImage())
+                        .rating(book.getRating())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -28,6 +31,8 @@ public class BookService {
     public BookResponse.BookDetailDTO getBookDetail(Integer bookId) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 도서입니다." + bookId));
+        int userId = 1;
+        boolean liked = likeRepository.existsByUserIdAndBookId(userId, bookId);
 
         return BookResponse.BookDetailDTO.builder()
                 .id(book.getId())
@@ -37,6 +42,7 @@ public class BookService {
                 .price(book.getPrice())
                 .bookImage(book.getBookImage())
                 .rating(book.getRating())
+                .liked(liked)
                 .build();
     }
 }
