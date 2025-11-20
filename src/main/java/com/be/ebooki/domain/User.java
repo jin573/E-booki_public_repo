@@ -3,6 +3,7 @@ package com.be.ebooki.domain;
 import com.be.ebooki.enums.UserType;
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.*;
 
 @Getter
 @NoArgsConstructor
@@ -27,6 +28,9 @@ public class User {
     //소셜 로그인 및 소셜 로그인 종류 추가
     @Enumerated(EnumType.STRING)
     private UserType userType;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TeamUser> teamUsers = new ArrayList<>();
 
     @Builder
     public User(String email, String password, String nickname, String profileImage, UserType userType){

@@ -33,7 +33,7 @@ public class SecurityConfig {
                         ,"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/h2-console/**"
                                 ,"/auth/login/kakao/**").permitAll()
                         .requestMatchers("/auth/**").authenticated() // test 같은 건 인증 필요
-                        .requestMatchers("/api/books/**").authenticated()
+                        .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
