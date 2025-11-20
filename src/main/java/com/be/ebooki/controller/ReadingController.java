@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/reading")
 @RequiredArgsConstructor
@@ -16,12 +18,19 @@ public class ReadingController {
 
     private final ReadingService readingService;
 
-    @GetMapping("/{bookId}/enter")
-    public ResponseEntity<ReadingResponse.EnterDTO> enter(
+    @GetMapping("/{bookId}/highlights")
+    public ResponseEntity<ReadingResponse.HighlightListDTO> getHighlights(
             @PathVariable Integer bookId
     ) {
-        ReadingResponse.EnterDTO response = readingService.getInitialData(bookId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(readingService.getHighlights(bookId));
+    }
+
+    // ② 특정 하이라이트 → 댓글 + 이모티콘 개수 조회
+    @GetMapping("/highlights/{highlightId}/comments")
+    public ResponseEntity<List<ReadingResponse.CommentDTO>> getComments(
+            @PathVariable Integer highlightId
+    ) {
+        return ResponseEntity.ok(readingService.getComments(highlightId));
     }
 }
 

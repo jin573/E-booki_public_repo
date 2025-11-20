@@ -6,6 +6,8 @@ import com.be.ebooki.repository.HighlightRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ReadingService {
@@ -14,60 +16,60 @@ public class ReadingService {
     private final CommentRepository commentRepository;
     private final EmoticonRepository emoticonRepository;
 
-    public ReadingResponse.EnterDTO getInitialData(Integer bookId) {
+    public ReadingResponse.HighlightListDTO getHighlights(Integer bookId) {
 
-        var highlights = highlightRepository.findByBookId(bookId);
-
-        var highlightDTOs = highlights.stream()
-                .map(h -> {
-
-                    // 각 하이라이트의 댓글 조회
-                    var comments = commentRepository.findByHighlightId(h.getId());
-
-                    var commentDTOs = comments.stream()
-                            .map(c -> {
-
-                                // 각 댓글의 이모티콘 조회
-                                var emoticons = emoticonRepository.findByCommentId(c.getId());
-
-                                var emoticonDTOs = emoticons.stream()
-                                        .map(e -> ReadingResponse.EmoticonDTO.builder()
-                                                .id(e.getId())
-                                                .userId(e.getUserId())
-                                                .commentId(e.getCommentId())
-                                                .emoji(e.getEmoji().name())
-                                                .createdAt(e.getCreatedAt())
-                                                .build())
-                                        .toList();
-
-                                return ReadingResponse.CommentDTO.builder()
-                                        .id(c.getId())
-                                        .userId(c.getUserId())
-                                        .highlightId(c.getHighlightId())
-                                        .text(c.getText())
-                                        .createdAt(c.getCreatedAt())
-                                        .emoticons(emoticonDTOs)
-                                        .build();
-                            })
-                            .toList();
-
-                    return ReadingResponse.HighlightDTO.builder()
-                            .id(h.getId())
-                            .userId(h.getUserId())
-                            .teamId(h.getTeamId())
-                            .spineIndex(h.getSpineIndex())
-                            .cfi(h.getCfi())
-                            .text(h.getText())
-                            .color(h.getColor().name())
-                            .createdAt(h.getCreatedAt())
-                            .comments(commentDTOs)
-                            .build();
-                })
+        var highlightDTOs = highlightRepository.findByBookId(bookId)
+                .stream()
+                .map(h -> ReadingResponse.HighlightDTO.builder()
+                        .id(h.getId())
+                        .userId(h.getUserId())
+                        .teamId(h.getTeamId())
+                        .bookId(h.getBookId())
+                        .spineIndex(h.getSpineIndex())
+                        .cfi(h.getCfi())
+                        .text(h.getText())
+                        .color(h.getColor().toString())
+                        .build())
                 .toList();
 
-        return ReadingResponse.EnterDTO.builder()
+        return ReadingResponse.HighlightListDTO.builder()
                 .bookId(bookId)
                 .highlights(highlightDTOs)
                 .build();
     }
+
+    public List<ReadingResponse.CommentDTO> getComments(Integer highlightId) {
+
+        return commentRepository.findByHighlightId(highlightId)
+                .stream()
+                .map(c -> ReadingResponse.CommentDTO.builder()
+                        .id(c.getId())
+                        .userId(c.getUserId())
+                        .highlightId(c.getHighlightId())
+                        .text(c.getText())
+                        .createdAt(c.getCreatedAt())
+                        .emoticons(buildEmoticonCount(c.getId()))
+                        .build()
+                )
+                .toList();
+    }
+
+    private ReadingResponse.EmoticonCountDTO buildEmoticonCount(Integer commentId) {
+
+        var emoticonList = emoticonRepository.findByCommentId(commentId);
+
+        int likeCount = (int) emoticonList.stream()
+                .filter(e -> e.getEmoji().name().equals("LIKE"))
+                .count();
+
+        int cryCount = (int) emoticonList.stream()
+                .filter(e -> e.getEmoji().name().equals("CRY"))
+                .count();
+
+        return ReadingResponse.EmoticonCountDTO.builder()
+                .likeCount(likeCount)
+                .cryCount(cryCount)
+                .build();
+    }
+
 }

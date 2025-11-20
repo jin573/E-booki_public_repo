@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 public class BookResponse {
 
     @Data
@@ -30,5 +32,13 @@ public class BookResponse {
         private Double rating;
 
         private boolean liked;
+    }
+
+    @Data
+    @Builder
+    public static class SearchResponse {
+        private String query;
+        private List<BookListDTO> bookList;
+        private Integer totalBooks;
     }
 }
