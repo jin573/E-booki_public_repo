@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.UUID;
 
 @Service
@@ -28,9 +29,18 @@ public class TeamService {
 
     private static final String INVITE_LINK_PREFIX = "invite:team:%d";
 
+    private static final String LOCKED_PREFIX = "lock:team:create:%s:%s";
 
     @Transactional
     public TeamResponse.TeamInfoDTO initTeam(Integer userId, String teamName) {
+        //클라이언트가 더블 클릭 시 중복 팀 생성 가능성 -> 멱등키 관리
+        String lockedKey = LOCKED_PREFIX.formatted(userId, teamName);
+        boolean isLocked = redisService.setIfAbsent(lockedKey, "1", Duration.ofSeconds(1));
+
+        if(!isLocked){
+            throw new IllegalStateException("초대 링크 생성 중복 요청입니다.");
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
 
@@ -95,18 +105,18 @@ public class TeamService {
         }
 
         //초대 링크를 만들어서 반환
-        String key = INVITE_LINK_PREFIX.formatted(team.getId());
-        String value = redisService.getValues(key); //value 불러오기
+        String inviteKey = INVITE_LINK_PREFIX.formatted(team.getId());
+        String inviteValue = redisService.getValues(inviteKey); //value 불러오기
 
         //초대링크 만료 시 재발급
-        if(value == null || value.equals("false")){
+        if(inviteValue == null || inviteValue.equals("false")){
             final String randomCode = UUID.randomUUID().toString();
-            redisService.setValues(key, randomCode, RedisService.expireTime());
-            value = randomCode;
+            redisService.setValues(inviteKey, randomCode, RedisService.expireTime());
+            inviteValue = randomCode;
         }
 
         //초대링크 유효 시 그대로 return
-        return baseUrl + "/teams/invite?token=" + value;
+        return baseUrl + "/teams/invite?token=" + inviteValue;
     }
 
 }

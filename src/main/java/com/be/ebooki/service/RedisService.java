@@ -31,4 +31,10 @@ public class RedisService {
         final LocalDateTime setTTL = now.plusMinutes(15);
         return Duration.between(now, setTTL);
     }
+
+    public boolean setIfAbsent(String key, String value, Duration duration) {
+        return Boolean.TRUE.equals(
+                redisTemplate.opsForValue().setIfAbsent(key, value, duration)
+        );
+    }
 }
