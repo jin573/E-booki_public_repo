@@ -1,7 +1,10 @@
 package com.be.ebooki.controller;
 
 import com.be.ebooki.domain.Team;
+import com.be.ebooki.dto.BookResponse;
+import com.be.ebooki.dto.TeamRequest;
 import com.be.ebooki.dto.TeamResponse;
+import com.be.ebooki.service.BookService;
 import com.be.ebooki.service.TeamService;
 import com.be.ebooki.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.awt.print.Book;
 
 @RestController
 @RequestMapping("/api/teams")
@@ -23,19 +28,24 @@ public class TeamController {
     private final TeamService teamService;
 
     private final UserService userService;
+    private final BookService bookService;
 
-    @PostMapping("/{teamName}")
-    public ResponseEntity<?> createTeam(@PathVariable String teamName){
+
+    @PostMapping
+    public ResponseEntity<?> createTeam(@RequestBody TeamRequest.TeamInitDTO teamInitDTO){
 
         Integer userId = userService.getCurrentUserId();
 
-        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.initTeam(userId, teamName);
-        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO>builder()
+        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.initTeam(userId, teamInitDTO.getTeamName(), teamInitDTO.getBookId());
+        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId());
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
                 .statusCode(200)
                 .message("팀 생성 성공 및 링크 생성 성공")
-                .data(teamInfoDTO)
+                .teamData(teamInfoDTO)
+                .bookData(bookDTO)
                 .build();
         return ResponseEntity.ok(responseDTO);
     }
+
 
 }

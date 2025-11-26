@@ -29,12 +29,12 @@ public class TeamService {
 
     private static final String INVITE_LINK_PREFIX = "invite:team:%d";
 
-    private static final String LOCKED_PREFIX = "lock:team:create:%s:%s";
+    private static final String LOCKED_PREFIX = "lock:team:create:%s:%s:%d";
 
     @Transactional
-    public TeamResponse.TeamInfoDTO initTeam(Integer userId, String teamName) {
+    public TeamResponse.TeamInfoDTO initTeam(Integer userId, String teamName, Integer bookId) {
         //클라이언트가 더블 클릭 시 중복 팀 생성 가능성 -> 멱등키 관리
-        String lockedKey = LOCKED_PREFIX.formatted(userId, teamName);
+        String lockedKey = LOCKED_PREFIX.formatted(userId, teamName, bookId);
         boolean isLocked = redisService.setIfAbsent(lockedKey, "1", Duration.ofSeconds(1));
 
         if(!isLocked){
@@ -48,7 +48,7 @@ public class TeamService {
             throw new IllegalArgumentException("팀 이름은 필수입니다");
         }
 
-        TeamResponse.TeamDTO teamDTO = createTeam(teamName); //팀 생성
+        TeamResponse.TeamDTO teamDTO = createTeam(teamName, bookId); //팀 생성
         TeamResponse.TeamUserDTO teamUserDTO = joinTeamAndUser(userId, teamDTO); //팀 생성 후 유저 추가
         String inviteUrl = inviteTeam(userId, teamDTO); //그 후 링크 생성 일괄 처리 -> 트랜잭션 필요
 
@@ -59,10 +59,11 @@ public class TeamService {
                 .build();
     }
 
-    private TeamResponse.TeamDTO createTeam(String teamName) {
+    private TeamResponse.TeamDTO createTeam(String teamName, Integer bookId) {
 
         Team team = teamRepository.save(Team.builder()
                 .teamName(teamName)
+                .bookId(bookId)
                 .build());
 
         return TeamResponse.TeamDTO.from(team);
@@ -116,7 +117,7 @@ public class TeamService {
         }
 
         //초대링크 유효 시 그대로 return
-        return baseUrl + "/teams/invite?token=" + inviteValue;
+        return baseUrl + "/api/teams/invite?token=" + inviteValue;
     }
 
 }

@@ -14,11 +14,12 @@ public class TeamResponse {
 
     @Getter
     @Builder
-    public static class TeamResponseDTO<T>{
+    public static class TeamResponseDTO<T1, T2>{
         private int statusCode;
         private String message;
 
-        private T data;
+        private T1 teamData;
+        private T2 bookData;
 
     }
 
@@ -36,10 +37,13 @@ public class TeamResponse {
         private Integer id;
         private String teamName;
 
+        private Integer bookId;
+
         public static TeamDTO from(Team team) {
             return TeamDTO.builder()
                     .id(team.getId())
                     .teamName(team.getTeamName())
+                    .bookId(team.getBookId())
                     .build();
         }
     }
