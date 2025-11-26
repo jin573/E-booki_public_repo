@@ -73,7 +73,7 @@ public class TeamServiceTest {
         //팀 생성 확인
         assertNotNull(result.getTeamData().getId(), "팀 id가 생성되어야 함");
         assertEquals("TestTeam", result.getTeamData().getTeamName());
-        assertEquals(user.getId(), result.getTeamUserData().getUserId());
+        assertEquals(user.getId(), result.getTeamUserData().get(0).getUserId());
         //bookId 저장 확인
         assertEquals(result.getTeamData().getBookId(), savedTeam.getBookId());
         //teamuser 1명 저장 확인

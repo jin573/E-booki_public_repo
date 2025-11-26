@@ -47,5 +47,23 @@ public class TeamController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @PostMapping("/invite")
+    public ResponseEntity<?> inviteUser(@RequestParam String token){
+        //누구나 접속 가능
+        //수락 버튼 눌렀을 경우 요금제 검사, user 유효성 검사 진행
+        //현재 api에서는 팀 정보, 도서 정보, 팀원 리스트를 가져와야 한다.
+
+        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.getTeamInfo(token);
+        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId());
+
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
+                .statusCode(200)
+                .message("팀, 도서, 팀원 정보 불러오기 성공")
+                .teamData(teamInfoDTO)
+                .bookData(bookDTO)
+                .build();
+        return ResponseEntity.ok(responseDTO);
+    }
+
 
 }

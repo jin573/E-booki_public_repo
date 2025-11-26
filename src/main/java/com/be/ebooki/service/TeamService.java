@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
+import java.util.List;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -50,11 +50,16 @@ public class TeamService {
 
         TeamResponse.TeamDTO teamDTO = createTeam(teamName, bookId); //팀 생성
         TeamResponse.TeamUserDTO teamUserDTO = joinTeamAndUser(userId, teamDTO); //팀 생성 후 유저 추가
+
+        List<TeamResponse.TeamUserDTO> teamUsersDTO = teamUserRepository.findAllByTeamId(teamDTO.getId())
+                .stream()
+                .map(TeamResponse.TeamUserDTO::from)
+                .toList();
         String inviteUrl = inviteTeam(userId, teamDTO); //그 후 링크 생성 일괄 처리 -> 트랜잭션 필요
 
         return TeamResponse.TeamInfoDTO.builder()
                 .teamData(teamDTO)
-                .teamUserData(teamUserDTO)
+                .teamUserData(teamUsersDTO)
                 .inviteUrl(inviteUrl)
                 .build();
     }
@@ -120,4 +125,28 @@ public class TeamService {
         return baseUrl + "/api/teams/invite?token=" + inviteValue;
     }
 
+    public TeamResponse.TeamInfoDTO getTeamInfo(String token) {
+        Integer teamId = redisService.findByTeamByToken(token);
+
+        // 존재하지 않거나 만료된 링크면 예외 처리
+        if (teamId == null) {
+            throw new IllegalArgumentException("유효하지 않거나 만료된 초대 링크입니다.");
+        }
+
+        // team 조회
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
+
+        // team에 속한 user 조회
+        List<TeamResponse.TeamUserDTO> teamUsersDTO = teamUserRepository.findAllByTeamId(team.getId())
+                .stream()
+                .map(TeamResponse.TeamUserDTO::from)
+                .toList();
+
+        // DTO 변환 후 반환
+        return TeamResponse.TeamInfoDTO.builder()
+                .teamData(TeamResponse.TeamDTO.from(team))
+                .teamUserData(teamUsersDTO)
+                .build();
+    }
 }

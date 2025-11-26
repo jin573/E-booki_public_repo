@@ -1,8 +1,12 @@
 package com.be.ebooki.service;
 
+import com.be.ebooki.domain.Team;
+import com.be.ebooki.repository.TeamRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +19,7 @@ import java.time.ZoneOffset;
 public class RedisService {
 
     private final RedisTemplate<String, String> redisTemplate;
+    private final TeamRepository teamRepository;
 
     public void setValues(String key, String value, Duration duration){
         ValueOperations<String, String> values = redisTemplate.opsForValue();
@@ -28,7 +33,7 @@ public class RedisService {
 
     public static Duration expireTime() {
         final LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
-        final LocalDateTime setTTL = now.plusMinutes(15);
+        final LocalDateTime setTTL = now.plusMinutes(1);
         return Duration.between(now, setTTL);
     }
 
@@ -37,4 +42,21 @@ public class RedisService {
                 redisTemplate.opsForValue().setIfAbsent(key, value, duration)
         );
     }
+
+    //token으로 teamId = key 찾기
+    public Integer findByTeamByToken(String token){
+        ScanOptions scanOptions = ScanOptions.scanOptions().match("*").count(10).build();
+        Cursor<byte[]> keys = redisTemplate.getConnectionFactory().getConnection().scan(scanOptions);
+
+        while (keys.hasNext()){
+            String key = new String(keys.next());
+            String value = getValues(key);
+            if(value != null || value.equals(token)){
+                return Integer.valueOf(
+                        key.replace("invite:team:", ""));
+            }
+        }
+        return null;
+    }
+
 }

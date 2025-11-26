@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
+import java.util.List;
 
 @Getter
 public class TeamResponse {
@@ -27,7 +28,7 @@ public class TeamResponse {
     @Builder
     public static class TeamInfoDTO{
         private TeamDTO teamData;
-        private TeamUserDTO teamUserData;
+        private List<TeamUserDTO> teamUserData;
         private String inviteUrl;
     }
 
