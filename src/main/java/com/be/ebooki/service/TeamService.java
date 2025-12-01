@@ -7,6 +7,7 @@ import com.be.ebooki.dto.TeamResponse;
 import com.be.ebooki.repository.TeamRepository;
 import com.be.ebooki.repository.TeamUserRepository;
 import com.be.ebooki.repository.UserRepository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,12 +30,13 @@ public class TeamService {
 
     private static final String INVITE_LINK_PREFIX = "invite:team:%d";
 
-    private static final String LOCKED_PREFIX = "lock:team:create:%s:%s:%d";
+    private static final String INVITE_LOCKED_PREFIX = "lock:team:create:%s:%s:%d"; //초대링크 생성시 사용
+    private static final String JOIN_LOCKED_PREFIX = "lock:team:join:%d";//초대링크 접속시 사용
 
     @Transactional
     public TeamResponse.TeamInfoDTO initTeam(Integer userId, String teamName, Integer bookId) {
         //클라이언트가 더블 클릭 시 중복 팀 생성 가능성 -> 멱등키 관리
-        String lockedKey = LOCKED_PREFIX.formatted(userId, teamName, bookId);
+        String lockedKey = INVITE_LOCKED_PREFIX.formatted(userId, teamName, bookId);
         boolean isLocked = redisService.setIfAbsent(lockedKey, "1", Duration.ofSeconds(1));
 
         if(!isLocked){
@@ -126,7 +128,7 @@ public class TeamService {
     }
 
     public TeamResponse.TeamInfoDTO getTeamInfo(String token) {
-        Integer teamId = redisService.findByTeamByToken(token);
+        Integer teamId = redisService.findByTeamByToken(token); //INVITE_LINK_PREFIX 로 만들어진 토큰 필요
 
         // 존재하지 않거나 만료된 링크면 예외 처리
         if (teamId == null) {
@@ -149,4 +151,49 @@ public class TeamService {
                 .teamUserData(teamUsersDTO)
                 .build();
     }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public TeamResponse.TeamInfoDTO acceptInvite(Integer userId, String token) {
+        //팀 정보 검사
+        TeamResponse.TeamInfoDTO teamInfoDTO = getTeamInfo(token);
+        //이미 팀에 속해있는지 검사
+        boolean alreadyJoined = teamUserRepository.existsByTeamIdAndUserId(teamInfoDTO.getTeamData().getId(), userId);
+
+        if(alreadyJoined){
+            throw new IllegalStateException("이미 팀에 속해 있는 사용자입니다.");
+        }
+
+        //분산 락
+        String lockedKey = JOIN_LOCKED_PREFIX.formatted(teamInfoDTO.getTeamData().getId());
+        boolean isLocked = redisService.setIfAbsent(lockedKey, userId.toString(), Duration.ofSeconds(5));
+
+        if(!isLocked){
+            throw new IllegalStateException("동시 가입 요청이 있습니다. 잠시 후 다시 시도해주세요.");
+        }
+
+        try{
+            //회원 count
+            long memberCount = teamUserRepository.countByTeamId(teamInfoDTO.getTeamData().getId());
+            if(memberCount >= 4){
+                throw new IllegalStateException("팀원은 4명까지 가능합니다.");
+            }
+            //팀 가입
+            joinTeamAndUser(userId, teamInfoDTO.getTeamData());
+
+            List<TeamResponse.TeamUserDTO> teamUserDTOS = teamUserRepository.findAllByTeamId(teamInfoDTO.getTeamData().getId())
+                    .stream()
+                    .map(TeamResponse.TeamUserDTO::from)
+                    .toList();
+
+            return TeamResponse.TeamInfoDTO.builder()
+                    .teamData(teamInfoDTO.getTeamData())
+                    .teamUserData(teamUserDTOS)
+                    .inviteUrl(teamInfoDTO.getInviteUrl())
+                    .build();
+
+        }finally{
+            redisService.delete(lockedKey);
+        }
+    }
+
 }

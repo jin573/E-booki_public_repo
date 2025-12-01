@@ -34,6 +34,7 @@ public class SecurityConfig {
                                 ,"/auth/login/kakao/**", "/api/teams/invite").permitAll()
                         .requestMatchers("/auth/**").authenticated() // test 같은 건 인증 필요
                         .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/teams/invite/join").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

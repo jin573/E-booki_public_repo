@@ -65,5 +65,24 @@ public class TeamController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @PostMapping("/invite/join")
+    public ResponseEntity<?> joinUser(@RequestParam String token){
+        //user 검사
+        Integer userId = userService.getCurrentUserId();
+        //요금제 검사
+        //팀 검사
+        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.acceptInvite(userId, token); //팀에 올바르게 추가 된 경우
+        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId()); //도서를 가져와서 추가하기
+
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
+                .statusCode(200)
+                .message("팀원 추가 성공")
+                .teamData(teamInfoDTO)
+                .bookData(bookDTO)
+                .build();
+
+        return ResponseEntity.ok(responseDTO);
+
+    }
 
 }
