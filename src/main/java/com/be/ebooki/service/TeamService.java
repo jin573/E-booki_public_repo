@@ -6,12 +6,14 @@ import com.be.ebooki.domain.User;
 import com.be.ebooki.dto.TeamResponse;
 import com.be.ebooki.repository.TeamRepository;
 import com.be.ebooki.repository.TeamUserRepository;
+import com.be.ebooki.repository.UserBookProgressRepository;
 import com.be.ebooki.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -23,6 +25,7 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final TeamUserRepository teamUserRepository;
+    private final UserBookProgressRepository userBookProgressRepository;
 
     private final RedisService redisService;
 
@@ -108,5 +111,31 @@ public class TeamService {
         //초대링크 유효 시 그대로 return
         return baseUrl + "/teams/invite?token=" + value;
     }
+
+    public Double calculateTeamRating(Integer teamId) {
+
+        // 팀원 user list 가져오기
+        List<Integer> memberIds = teamUserRepository.findUserIdsByTeamId(teamId);
+
+        // 팀이 읽는 책
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("팀 없음"));
+
+        Integer bookId = team.getBook().getId();
+
+        // 해당 유저들의 UserBookProgress 중 rating 있는 것만 조회
+        List<Integer> ratings = userBookProgressRepository
+                .findRatingsByUserIdsAndBook(memberIds, bookId); // rating != null인 것만
+
+        if (ratings.isEmpty()) {
+            return null; // 아직 아무도 평가 안함
+        }
+
+        return ratings.stream()
+                .mapToInt(r -> r)
+                .average()
+                .orElse(0);
+    }
+
 
 }

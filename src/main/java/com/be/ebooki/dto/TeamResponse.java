@@ -9,6 +9,8 @@ import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 public class TeamResponse {
 
@@ -58,4 +60,29 @@ public class TeamResponse {
                     .build();
         }
     }
+
+    @Getter
+    @Builder
+    public static class TeamListItemDTO {
+        private Integer teamId;
+        private String teamName;
+
+        private String bookTitle;
+        private String bookImage;
+
+        private List<String> memberProfileImages;
+    }
+
+    @Getter
+    @Builder
+    public static class TeamListResponse {
+        private List<TeamListItemDTO> teams;
+    }
+
+
+
+
+
+
+
 }
