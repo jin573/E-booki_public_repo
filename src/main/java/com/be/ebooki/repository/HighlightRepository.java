@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface HighlightRepository extends JpaRepository<Highlight, Integer> {
     List<Highlight> findByBookId(Integer bookId);
+    List<Highlight> findByBookIdAndUserId(Integer bookId, Integer userId);
+
 }

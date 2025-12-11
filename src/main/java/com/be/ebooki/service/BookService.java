@@ -28,10 +28,9 @@ public class BookService {
                 .collect(Collectors.toList());
     }
 
-    public BookResponse.BookDetailDTO getBookDetail(Integer bookId) {
+    public BookResponse.BookDetailDTO getBookDetail(Integer bookId, Integer userId) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 도서입니다." + bookId));
-        int userId = 1;
         boolean liked = likeRepository.existsByUserIdAndBookId(userId, bookId);
 
         return BookResponse.BookDetailDTO.builder()

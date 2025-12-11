@@ -1,4 +1,6 @@
 package com.be.ebooki.service;
+import com.be.ebooki.domain.*;
+import com.be.ebooki.dto.ReadingRequest;
 import com.be.ebooki.dto.ReadingResponse;
 import com.be.ebooki.repository.CommentRepository;
 import com.be.ebooki.repository.EmoticonRepository;
@@ -38,7 +40,7 @@ public class ReadingService {
                 .build();
     }
 
-    public List<ReadingResponse.CommentDTO> getComments(Integer highlightId) {
+    public List<ReadingResponse.CommentDTO> getComments(Integer highlightId, Integer userId) {
 
         return commentRepository.findByHighlightId(highlightId)
                 .stream()
@@ -49,6 +51,7 @@ public class ReadingService {
                         .text(c.getText())
                         .createdAt(c.getCreatedAt())
                         .emoticons(buildEmoticonCount(c.getId()))
+                        .myEmoticon(buildUserEmoticon(c.getId(), userId))
                         .build()
                 )
                 .toList();
@@ -58,18 +61,103 @@ public class ReadingService {
 
         var emoticonList = emoticonRepository.findByCommentId(commentId);
 
+        int smileCount = (int) emoticonList.stream()
+                .filter(e -> e.getEmoji().name().equals("SMILE"))
+                .count();
+
         int likeCount = (int) emoticonList.stream()
                 .filter(e -> e.getEmoji().name().equals("LIKE"))
                 .count();
 
-        int cryCount = (int) emoticonList.stream()
-                .filter(e -> e.getEmoji().name().equals("CRY"))
-                .count();
-
         return ReadingResponse.EmoticonCountDTO.builder()
+                .smileCount(smileCount)
                 .likeCount(likeCount)
-                .cryCount(cryCount)
                 .build();
     }
+    private ReadingResponse.UserEmoticonDTO buildUserEmoticon(Integer commentId, Integer userId) {
+
+        var list = emoticonRepository.findByCommentIdAndUserId(commentId, userId);
+
+        boolean smiled = list.stream().anyMatch(e -> e.getEmoji() == EmojiType.SMILE);
+        boolean liked = list.stream().anyMatch(e -> e.getEmoji() == EmojiType.LIKE);
+
+        return ReadingResponse.UserEmoticonDTO.builder()
+                .smiled(smiled)
+                .liked(liked)
+                .build();
+    }
+
+    /** 하이라이트 생성 */
+    public ReadingResponse.HighlightDTO createHighlight(
+            ReadingRequest.CreateHighlightDTO req,
+            Integer userId) {
+
+        Highlight highlight = Highlight.builder()
+                .userId(userId)
+                .bookId(req.getBookId())
+                .spineIndex(req.getSpineIndex())
+                .cfi(req.getCfi())
+                .text(req.getText())
+                .color(HighlightColor.valueOf(req.getColor()))
+                .build();
+
+        highlightRepository.save(highlight);
+
+        return ReadingResponse.HighlightDTO.builder()
+                .id(highlight.getId())
+                .userId(highlight.getUserId())
+                .bookId(highlight.getBookId())
+                .spineIndex(highlight.getSpineIndex())
+                .cfi(highlight.getCfi())
+                .text(highlight.getText())
+                .color(highlight.getColor().name())
+                .build();
+    }
+
+    /** 댓글 생성 */
+    public ReadingResponse.CommentDTO createComment(
+            ReadingRequest.CreateCommentDTO req,
+            Integer userId) {
+
+        Comment comment = Comment.builder()
+                .userId(userId)
+                .highlightId(req.getHighlightId())
+                .text(req.getText())
+                .createdAt(System.currentTimeMillis())
+                .build();
+
+        commentRepository.save(comment);
+
+        return ReadingResponse.CommentDTO.builder()
+                .id(comment.getId())
+                .userId(userId)
+                .highlightId(comment.getHighlightId())
+                .text(comment.getText())
+                .createdAt(comment.getCreatedAt())
+                .emoticons(new ReadingResponse.EmoticonCountDTO(0, 0))
+                .myEmoticon(new ReadingResponse.UserEmoticonDTO(false, false))
+                .build();
+    }
+
+    public ReadingResponse.EmoticonCountDTO toggleEmoticon(Integer commentId, Integer userId, EmojiType emojiType) {
+
+        var existing = emoticonRepository
+                .findByCommentIdAndUserIdAndEmoji(commentId, userId, emojiType);
+
+        if (existing.isPresent()) {
+            emoticonRepository.delete(existing.get());
+        } else {
+            Emoticon newEmoji = new Emoticon();
+            newEmoji.setUserId(userId);
+            newEmoji.setCommentId(commentId);
+            newEmoji.setEmoji(emojiType);
+            emoticonRepository.save(newEmoji);
+        }
+
+        return buildEmoticonCount(commentId);
+    }
+
+
+
 
 }

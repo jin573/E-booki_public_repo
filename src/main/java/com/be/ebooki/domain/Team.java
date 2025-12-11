@@ -17,11 +17,14 @@ public class Team {
     @Column(name = "team_name", length = 100)
     private String teamName;
 
-    @Column(name = "book_id")
-    private Integer bookId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_id")
+    private Book book;
+
     @Builder
-    public Team(String teamName, Integer bookId) {
+    public Team(String teamName) {
+
         this.teamName = teamName;
-        this.bookId = bookId;
+        this.book = book;
     }
 }
