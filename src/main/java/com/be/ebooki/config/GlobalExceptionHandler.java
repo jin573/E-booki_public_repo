@@ -32,4 +32,26 @@ public class GlobalExceptionHandler {
                         .build()
         );
     }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<?> handleIllegalStateExceptions(IllegalStateException ex){
+        return ResponseEntity.badRequest().body(
+                UserResponse.UserResponseDTO.<String>builder()
+                        .statusCode(400)
+                        .message(ex.getMessage())
+                        .data(null)
+                        .build()
+        );
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<?> handleRuntimeExceptions(RuntimeException ex){
+        return ResponseEntity.badRequest().body(
+                UserResponse.UserResponseDTO.<String>builder()
+                        .statusCode(400)
+                        .message(ex.getMessage())
+                        .data(null)
+                        .build()
+        );
+    }
 }

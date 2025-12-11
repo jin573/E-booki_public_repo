@@ -17,8 +17,11 @@ public class Team {
     @Column(name = "team_name", length = 100)
     private String teamName;
 
+    @Column(name = "book_id")
+    private Integer bookId;
     @Builder
-    public Team(String teamName) {
+    public Team(String teamName, Integer bookId) {
         this.teamName = teamName;
+        this.bookId = bookId;
     }
 }

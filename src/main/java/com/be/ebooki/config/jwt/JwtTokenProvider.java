@@ -42,12 +42,13 @@ public class JwtTokenProvider {
     }
     //토큰에서 아이디 가져오기
     public Integer getUserIdFromToken(String token){
-        return Jwts.parserBuilder()
+        Number userId =  Jwts.parserBuilder()
                 .setSigningKey(jwtProperties.getSecretKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
-                .get("userId", Integer.class);
+                .get("userId", Number.class);
+        return userId.intValue();
     }
 
 

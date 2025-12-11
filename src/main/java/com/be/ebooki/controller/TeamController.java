@@ -1,7 +1,10 @@
 package com.be.ebooki.controller;
 
 import com.be.ebooki.domain.Team;
+import com.be.ebooki.dto.BookResponse;
+import com.be.ebooki.dto.TeamRequest;
 import com.be.ebooki.dto.TeamResponse;
+import com.be.ebooki.service.BookService;
 import com.be.ebooki.service.TeamService;
 import com.be.ebooki.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.awt.print.Book;
 
 @RestController
 @RequestMapping("/api/teams")
@@ -23,19 +28,61 @@ public class TeamController {
     private final TeamService teamService;
 
     private final UserService userService;
+    private final BookService bookService;
 
-    @PostMapping("/{teamName}")
-    public ResponseEntity<?> createTeam(@PathVariable String teamName){
+
+    @PostMapping
+    public ResponseEntity<?> createTeam(@RequestBody TeamRequest.TeamInitDTO teamInitDTO){
 
         Integer userId = userService.getCurrentUserId();
 
-        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.initTeam(userId, teamName);
-        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO>builder()
+        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.initTeam(userId, teamInitDTO.getTeamName(), teamInitDTO.getBookId());
+        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId());
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
                 .statusCode(200)
                 .message("팀 생성 성공 및 링크 생성 성공")
-                .data(teamInfoDTO)
+                .teamData(teamInfoDTO)
+                .bookData(bookDTO)
                 .build();
         return ResponseEntity.ok(responseDTO);
+    }
+
+    @PostMapping("/invite")
+    public ResponseEntity<?> inviteUser(@RequestParam String token){
+        //누구나 접속 가능
+        //수락 버튼 눌렀을 경우 요금제 검사, user 유효성 검사 진행
+        //현재 api에서는 팀 정보, 도서 정보, 팀원 리스트를 가져와야 한다.
+
+        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.getTeamInfo(token);
+        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId());
+
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
+                .statusCode(200)
+                .message("팀, 도서, 팀원 정보 불러오기 성공")
+                .teamData(teamInfoDTO)
+                .bookData(bookDTO)
+                .build();
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @PostMapping("/invite/join")
+    public ResponseEntity<?> joinUser(@RequestParam String token){
+        //user 검사
+        Integer userId = userService.getCurrentUserId();
+        //요금제 검사
+        //팀 검사
+        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.acceptInvite(userId, token); //팀에 올바르게 추가 된 경우
+        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId()); //도서를 가져와서 추가하기
+
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
+                .statusCode(200)
+                .message("팀원 추가 성공")
+                .teamData(teamInfoDTO)
+                .bookData(bookDTO)
+                .build();
+
+        return ResponseEntity.ok(responseDTO);
+
     }
 
 }

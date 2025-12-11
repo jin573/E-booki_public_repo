@@ -8,17 +8,19 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
+import java.util.List;
 
 @Getter
 public class TeamResponse {
 
     @Getter
     @Builder
-    public static class TeamResponseDTO<T>{
+    public static class TeamResponseDTO<T1, T2>{
         private int statusCode;
         private String message;
 
-        private T data;
+        private T1 teamData;
+        private T2 bookData;
 
     }
 
@@ -26,7 +28,7 @@ public class TeamResponse {
     @Builder
     public static class TeamInfoDTO{
         private TeamDTO teamData;
-        private TeamUserDTO teamUserData;
+        private List<TeamUserDTO> teamUserData;
         private String inviteUrl;
     }
 
@@ -36,10 +38,13 @@ public class TeamResponse {
         private Integer id;
         private String teamName;
 
+        private Integer bookId;
+
         public static TeamDTO from(Team team) {
             return TeamDTO.builder()
                     .id(team.getId())
                     .teamName(team.getTeamName())
+                    .bookId(team.getBookId())
                     .build();
         }
     }
