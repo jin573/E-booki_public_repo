@@ -3,11 +3,9 @@ package com.be.ebooki.service;
 import com.be.ebooki.domain.Team;
 import com.be.ebooki.domain.TeamUser;
 import com.be.ebooki.domain.User;
+import com.be.ebooki.domain.Book;
 import com.be.ebooki.dto.TeamResponse;
-import com.be.ebooki.repository.TeamRepository;
-import com.be.ebooki.repository.TeamUserRepository;
-import com.be.ebooki.repository.UserBookProgressRepository;
-import com.be.ebooki.repository.UserRepository;
+import com.be.ebooki.repository.*;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +26,7 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final TeamUserRepository teamUserRepository;
+    private final BookRepository bookRepository;
     private final UserBookProgressRepository userBookProgressRepository;
 
     private final RedisService redisService;
@@ -72,9 +71,12 @@ public class TeamService {
 
     private TeamResponse.TeamDTO createTeam(String teamName, Integer bookId) {
 
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 책입니다."));
+
         Team team = teamRepository.save(Team.builder()
                 .teamName(teamName)
-                .bookId(bookId)
+                .book(book)
                 .build());
 
         return TeamResponse.TeamDTO.from(team);
