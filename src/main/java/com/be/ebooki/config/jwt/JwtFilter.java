@@ -32,7 +32,7 @@ public class JwtFilter extends OncePerRequestFilter {
         //회원가입과 로그인은 누구나 접근
         if (path.contains("/auth/signup") || path.contains("/auth/login") || path.contains("/auth/reissue")
                 || path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui") || path.startsWith("/swagger-ui.html")|| path.startsWith("/h2-console")
-                || path.contains("/auth/login/kakao")) {
+                || path.contains("/auth/login/kakao") || path.startsWith("/test")) {
             filterChain.doFilter(request, response);
             return;
         }
