@@ -1,6 +1,8 @@
 package com.be.ebooki.config;
 
+import com.be.ebooki.config.jwt.JwtTokenProvider;
 import com.be.ebooki.dto.WebSocketResponse;
+import com.be.ebooki.service.TeamService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,13 +23,34 @@ public class WebsocketHandler extends TextWebSocketHandler {
 
     //teamId로 session을 묶음
     private final ConcurrentHashMap<Integer, Set<WebSocketSession>> teamSessions = new ConcurrentHashMap<>();
+    private final JwtTokenProvider jwtTokenProvider;
 
+    private final TeamService teamService;
 
     //서버 접속 시 client 저장
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         Integer teamId = getTeamId(session);
+        String token = getToken(session);
+        
+        //JWT 토큰 검증
+        if(token == null || !jwtTokenProvider.validateToken(token)){
+            session.close(CloseStatus.NOT_ACCEPTABLE.withReason("JWT invalid in SOCKET"));
+            return;
+        }
+        
+        Integer userId = jwtTokenProvider.getUserIdFromToken(token);
 
+        //세션에 저장
+        session.getAttributes().put("userId", userId);
+        session.getAttributes().put("teamId", teamId);
+
+        //팀 멤버인지 확인
+        if(!teamService.isMember(userId, teamId)){
+            session.close(CloseStatus.NOT_ACCEPTABLE.withReason("Not Team Member in SOCKET"));
+            return;
+        }
+        
         //세션에 없을 경우 추가
         teamSessions
                 .computeIfAbsent(teamId, k->ConcurrentHashMap.newKeySet())
@@ -36,6 +59,21 @@ public class WebsocketHandler extends TextWebSocketHandler {
         System.out.println("[SOCKET LOG] CONNECT teamId = " + teamId
                 + " session = " + session.getId()
                 + " size = " + teamSessions.get(teamId).size());
+    }
+
+    private String getToken(WebSocketSession session) {
+        String query = session.getUri().getQuery();
+        if (query == null) return null;
+
+        for (String param : query.split("&")) {
+            String[] kv = param.split("=");
+            if ("token".equals(kv[0])) {
+                return kv[1].startsWith("Bearer ")
+                        ? kv[1].substring(7)
+                        : kv[1];
+            }
+        }
+        return null;
     }
 
     //서버에서 나갈 시 제거
@@ -70,7 +108,8 @@ public class WebsocketHandler extends TextWebSocketHandler {
     }
 
     private void broadcast(WebSocketSession sender, WebSocketResponse webSocketResponse){
-        Set<WebSocketSession> sessions = teamSessions.get(webSocketResponse.getTeamId());
+        Integer teamId = (Integer) sender.getAttributes().get("teamId");
+        Set<WebSocketSession> sessions = teamSessions.get(teamId);
 
         if(sessions == null) return;
         //같은 teamId 내 세션에게 메세지 전송하기

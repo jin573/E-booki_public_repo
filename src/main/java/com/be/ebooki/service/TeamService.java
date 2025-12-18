@@ -109,4 +109,7 @@ public class TeamService {
         return baseUrl + "/teams/invite?token=" + value;
     }
 
+    public boolean isMember(Integer userId, Integer teamId) {
+        return teamUserRepository.exsitsByUserIdAndTeamId(userId, teamId);
+    }
 }
