@@ -1,13 +1,11 @@
 package com.be.ebooki.controller;
 
+import com.be.ebooki.dto.HighlightRequest;
 import com.be.ebooki.dto.ReadingResponse;
 import com.be.ebooki.service.ReadingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -32,5 +30,13 @@ public class ReadingController {
     ) {
         return ResponseEntity.ok(readingService.getComments(highlightId));
     }
+
+    //하이라이트 생성
+    @PostMapping("/highlight")
+    public ResponseEntity<?> createHighlight(@RequestBody HighlightRequest request){
+        readingService.createHighlight(request);
+        return ResponseEntity.ok().build();
+    }
+
 }
 
