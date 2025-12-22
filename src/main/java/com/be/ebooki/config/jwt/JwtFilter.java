@@ -1,19 +1,15 @@
 package com.be.ebooki.config.jwt;
 
-import com.be.ebooki.config.jwt.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -32,7 +28,7 @@ public class JwtFilter extends OncePerRequestFilter {
         //회원가입과 로그인은 누구나 접근
         if (path.contains("/auth/signup") || path.contains("/auth/login") || path.contains("/auth/reissue")
                 || path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui") || path.startsWith("/swagger-ui.html")|| path.startsWith("/h2-console")
-                || path.contains("/auth/login/kakao") || path.startsWith("/test")) {
+                || path.contains("/auth/login/kakao")) {
             filterChain.doFilter(request, response);
             return;
         }

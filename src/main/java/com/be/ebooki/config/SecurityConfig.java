@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/signup", "/auth/login", "/auth/reissue"
                         ,"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/h2-console/**"
-                                ,"/auth/login/kakao/**", "/test").permitAll()
+                                ,"/auth/login/kakao/**").permitAll()
                         .requestMatchers("/auth/**").authenticated() // test 같은 건 인증 필요
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated()
