@@ -41,6 +41,15 @@ public class ReadingResponse {
         private String text;
         private Long createdAt;
         private EmoticonCountDTO emoticons;
+        private UserEmoticonDTO myEmoticon;
+    }
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UserEmoticonDTO {
+        private boolean smiled;
+        private boolean liked;
     }
 
     @Data
@@ -48,7 +57,7 @@ public class ReadingResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class EmoticonCountDTO {
+        private int smileCount;
         private int likeCount;
-        private int cryCount;
     }
 }

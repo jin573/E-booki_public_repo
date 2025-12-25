@@ -2,23 +2,20 @@ package com.be.ebooki.dto;
 
 import com.be.ebooki.domain.Team;
 import com.be.ebooki.domain.TeamUser;
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
-
+import java.util.List;
 @Getter
 public class TeamResponse {
 
     @Getter
     @Builder
-    public static class TeamResponseDTO<T>{
+    public static class TeamResponseDTO<T1, T2>{
         private int statusCode;
         private String message;
 
-        private T data;
+        private T1 teamData;
+        private T2 bookData;
 
     }
 
@@ -26,7 +23,7 @@ public class TeamResponse {
     @Builder
     public static class TeamInfoDTO{
         private TeamDTO teamData;
-        private TeamUserDTO teamUserData;
+        private List<TeamUserDTO> teamUserData;
         private String inviteUrl;
     }
 
@@ -36,10 +33,13 @@ public class TeamResponse {
         private Integer id;
         private String teamName;
 
+        private Integer bookId;
+
         public static TeamDTO from(Team team) {
             return TeamDTO.builder()
                     .id(team.getId())
                     .teamName(team.getTeamName())
+                    .bookId(team.getBook().getId())
                     .build();
         }
     }
@@ -58,4 +58,29 @@ public class TeamResponse {
                     .build();
         }
     }
+
+    @Getter
+    @Builder
+    public static class TeamListItemDTO {
+        private Integer teamId;
+        private String teamName;
+
+        private String bookTitle;
+        private String bookImage;
+
+        private List<String> memberProfileImages;
+    }
+
+    @Getter
+    @Builder
+    public static class TeamListResponse {
+        private List<TeamListItemDTO> teams;
+    }
+
+
+
+
+
+
+
 }

@@ -17,8 +17,14 @@ public class Team {
     @Column(name = "team_name", length = 100)
     private String teamName;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_id")
+    private Book book;
+
     @Builder
-    public Team(String teamName) {
+    public Team(String teamName, Book book) {
+
         this.teamName = teamName;
+        this.book = book;
     }
 }
