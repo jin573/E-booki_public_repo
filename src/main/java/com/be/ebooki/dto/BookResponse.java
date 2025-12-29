@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class BookResponse {
@@ -32,11 +33,6 @@ public class BookResponse {
 
         //로그인한 사용자의 like 여부
         private boolean liked;
-//        //사용자가 남긴 하이라이트
-//        private List<ReadingResponse.HighlightDTO> highlights;
-//        //사용자가 남긴 댓글
-//        private List<ReadingResponse.CommentDTO> comments;
-
     }
 
     @Data

@@ -27,4 +27,8 @@ public class Team {
         this.teamName = teamName;
         this.book = book;
     }
+
+    public void updateTeamName(String teamName) {
+        this.teamName = teamName;
+    }
 }

@@ -15,8 +15,6 @@ public interface TeamUserRepository extends JpaRepository<TeamUser, Integer>
         WHERE tu.team.id = :teamId
     """)
     List<Integer> findUserIdsByTeamId(Integer teamId);
-
-public interface TeamUserRepository extends JpaRepository<TeamUser, Integer> {
     List<TeamUser> findAllByTeamId(Integer teamId);
 
     boolean existsByTeamIdAndUserId(Integer teamId, Integer userId);
