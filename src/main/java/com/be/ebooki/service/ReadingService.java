@@ -101,7 +101,11 @@ public class ReadingService {
             Integer userId,
             Integer teamId) {
 
-        if(!teamService.isMember(userId, teamId)){
+        if (!teamService.isTeamBook(teamId, req.getBookId())) {
+            throw new IllegalArgumentException("팀에 속하지 않은 책입니다.");
+        }
+
+        if(!teamService.isMember(teamId, userId)){
             throw new IllegalArgumentException("존재하지 않는 팀원입니다.");
         }
         Highlight highlight = highlightRepository.save(

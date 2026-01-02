@@ -4,7 +4,6 @@ import com.be.ebooki.dto.ReadingRequest;
 import com.be.ebooki.dto.ReadingResponse;
 import com.be.ebooki.enums.EmojiType;
 import com.be.ebooki.service.ReadingService;
-import com.be.ebooki.service.TeamService;
 import com.be.ebooki.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

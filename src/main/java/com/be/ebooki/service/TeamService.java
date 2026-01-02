@@ -133,10 +133,6 @@ public class TeamService {
         return baseUrl + "/api/teams/invite?token=" + inviteValue;
     }
 
-    public boolean isMember(Integer userId, Integer teamId) {
-        return teamUserRepository.existsByTeamIdAndUserId(userId, teamId);
-    }
-
     public TeamResponse.TeamInfoDTO getTeamInfo(String token) {
         Integer teamId = redisService.findByTeamByToken(token); //INVITE_LINK_PREFIX 로 만들어진 토큰 필요
 
@@ -231,4 +227,10 @@ public class TeamService {
                 .orElse(0);
     }
 
+    public boolean isMember(Integer teamId, Integer userId) {
+        return teamUserRepository.existsByTeamIdAndUserId(teamId, userId);
+    }
+    public boolean isTeamBook(Integer teamId, Integer bookId) {
+        return teamRepository.existsByTeamIdAndBookId(teamId, bookId);
+    }
 }

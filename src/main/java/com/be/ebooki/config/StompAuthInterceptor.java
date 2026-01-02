@@ -12,6 +12,12 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import java.net.URI;
 import java.util.Map;
 
+/*
+ * 해당 config가 하는 일
+ * 1. token 파싱
+ * 2. jwt 유효성 검사
+ * 3. userId, teamId 검사 후 session attributes에 저장
+ * */
 @Component
 @RequiredArgsConstructor
 public class StompAuthInterceptor implements HandshakeInterceptor {
@@ -32,10 +38,6 @@ public class StompAuthInterceptor implements HandshakeInterceptor {
         }
 
         Integer userId = jwtTokenProvider.getUserIdFromToken(token);
-
-        if (!teamService.isMember(userId, teamId)) {
-            return false;
-        }
 
         //세션에 저장
         attributes.put("userId", userId);

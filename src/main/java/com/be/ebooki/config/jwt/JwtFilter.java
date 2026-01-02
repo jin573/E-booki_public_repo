@@ -29,10 +29,12 @@ public class JwtFilter extends OncePerRequestFilter {
         if (path.contains("/auth/signup") || path.contains("/auth/login") || path.contains("/auth/reissue")
                 || path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui") || path.startsWith("/swagger-ui.html")|| path.startsWith("/h2-console")
                 || path.contains("/auth/login/kakao")
-                || path.equals("/api/teams/invite")) {
+                || path.equals("/api/teams/invite")
+                || path.startsWith("/ws")) {
             filterChain.doFilter(request, response);
             return;
         }
+
         //그 외 경로 인증
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             //인증 실패시 401
