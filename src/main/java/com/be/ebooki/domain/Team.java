@@ -22,7 +22,7 @@ public class Team {
     private Book book;
 
     @Builder
-    public Team(String teamName) {
+    public Team(String teamName, Book book) {
 
         this.teamName = teamName;
         this.book = book;

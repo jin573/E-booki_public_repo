@@ -42,4 +42,14 @@ public class BookResponse {
         private List<BookListDTO> bookList;
         private Integer totalBooks;
     }
+
+    @Data
+    @Builder
+    public static class BookPreviewDTO{
+        private Integer id;
+        private String title;
+        private String author;
+        private String publisher;
+        private String bookImage;
+    }
 }
