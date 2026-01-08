@@ -3,6 +3,8 @@ package com.be.ebooki.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "highlight")
 @Getter
@@ -33,5 +35,5 @@ public class Highlight {
     @Column(length = 1000)
     private String text;
 
-    private Long createdAt;
+    private LocalDateTime createdAt;
 }

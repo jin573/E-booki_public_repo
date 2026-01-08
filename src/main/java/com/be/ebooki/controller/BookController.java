@@ -1,6 +1,7 @@
 package com.be.ebooki.controller;
 
 import com.be.ebooki.dto.BookResponse;
+import com.be.ebooki.dto.ReadingResponse;
 import com.be.ebooki.service.BookService;
 import com.be.ebooki.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -29,4 +30,16 @@ public class BookController {
 
         return ResponseEntity.ok(bookService.getBookDetail(id, userId));
     }
+
+    @GetMapping("/books/{bookId}/reading-timeline")
+    public ResponseEntity<List<ReadingResponse.ReadingTimelineItemDTO>> getReadingTimeline(
+            @PathVariable Integer bookId,
+            @RequestParam(defaultValue = "ALL") String type
+    ) {
+        Integer userId = userService.getCurrentUserId();
+        return ResponseEntity.ok(
+                bookService.getBookReadingDetail(bookId, userId,type)
+        );
+    }
+
 }

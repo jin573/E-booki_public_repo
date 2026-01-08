@@ -2,6 +2,7 @@ package com.be.ebooki.dto;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class ReadingResponse {
@@ -39,7 +40,7 @@ public class ReadingResponse {
         private Integer userId;
         private Integer highlightId;
         private String text;
-        private Long createdAt;
+        private Local createdAt;
         private EmoticonCountDTO emoticons;
         private UserEmoticonDTO myEmoticon;
     }
@@ -60,4 +61,20 @@ public class ReadingResponse {
         private int smileCount;
         private int likeCount;
     }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public class ReadingTimelineItemDTO {
+
+        private String type; // "HIGHLIGHT" | "COMMENT"
+
+        private String text;
+
+        private Integer spineIndex; // 하이라이트만
+        private String cfi;         // 하이라이트만
+
+        private LocalDateTime createdAt;
+    }
+
 }
