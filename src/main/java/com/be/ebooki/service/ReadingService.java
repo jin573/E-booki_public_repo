@@ -1,11 +1,16 @@
 package com.be.ebooki.service;
+
 import com.be.ebooki.domain.*;
 import com.be.ebooki.dto.ReadingRequest;
+
 import com.be.ebooki.dto.ReadingResponse;
+import com.be.ebooki.enums.EmojiType;
+import com.be.ebooki.enums.HighlightColor;
 import com.be.ebooki.repository.CommentRepository;
 import com.be.ebooki.repository.EmoticonRepository;
 import com.be.ebooki.repository.HighlightRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +22,9 @@ public class ReadingService {
     private final HighlightRepository highlightRepository;
     private final CommentRepository commentRepository;
     private final EmoticonRepository emoticonRepository;
+    private final SimpMessagingTemplate simpMessagingTemplate;
+    private final TeamService teamService;
+
 
     public ReadingResponse.HighlightListDTO getHighlights(Integer bookId) {
 
@@ -90,28 +98,45 @@ public class ReadingService {
     /** 하이라이트 생성 */
     public ReadingResponse.HighlightDTO createHighlight(
             ReadingRequest.CreateHighlightDTO req,
-            Integer userId) {
+            Integer userId,
+            Integer teamId) {
 
-        Highlight highlight = Highlight.builder()
-                .userId(userId)
-                .bookId(req.getBookId())
-                .spineIndex(req.getSpineIndex())
-                .cfi(req.getCfi())
-                .text(req.getText())
-                .color(HighlightColor.valueOf(req.getColor()))
-                .build();
+        if (!teamService.isTeamBook(teamId, req.getBookId())) {
+            throw new IllegalArgumentException("팀에 속하지 않은 책입니다.");
+        }
 
-        highlightRepository.save(highlight);
+        if(!teamService.isMember(teamId, userId)){
+            throw new IllegalArgumentException("존재하지 않는 팀원입니다.");
+        }
+        Highlight highlight = highlightRepository.save(
+                Highlight.builder()
+                    .userId(userId)
+                    .teamId(teamId)
+                    .bookId(req.getBookId())
+                    .spineIndex(req.getSpineIndex())
+                    .cfi(req.getCfi())
+                    .text(req.getText())
+                    .color(HighlightColor.valueOf(req.getColor()))
+                    .build());
 
-        return ReadingResponse.HighlightDTO.builder()
+
+        ReadingResponse.HighlightDTO highlightDTO = ReadingResponse.HighlightDTO.builder()
                 .id(highlight.getId())
                 .userId(highlight.getUserId())
+                .teamId(highlight.getTeamId())
                 .bookId(highlight.getBookId())
                 .spineIndex(highlight.getSpineIndex())
                 .cfi(highlight.getCfi())
                 .text(highlight.getText())
                 .color(highlight.getColor().name())
                 .build();
+
+        //STOMP 얹기
+        simpMessagingTemplate.convertAndSend("/topic/teams/" + highlight.getTeamId() + "/books/" + highlight.getBookId(),
+                highlightDTO
+        );
+
+        return highlightDTO;
     }
 
     /** 댓글 생성 */
@@ -156,8 +181,6 @@ public class ReadingService {
 
         return buildEmoticonCount(commentId);
     }
-
-
 
 
 }

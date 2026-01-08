@@ -227,5 +227,10 @@ public class TeamService {
                 .orElse(0);
     }
 
-
+    public boolean isMember(Integer teamId, Integer userId) {
+        return teamUserRepository.existsByTeamIdAndUserId(teamId, userId);
+    }
+    public boolean isTeamBook(Integer teamId, Integer bookId) {
+        return teamRepository.existsByTeamIdAndBookId(teamId, bookId);
+    }
 }

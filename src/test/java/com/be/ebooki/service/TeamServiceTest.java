@@ -82,7 +82,7 @@ public class TeamServiceTest {
         assertEquals("TestTeam", result.getTeamData().getTeamName());
         assertEquals(user.getId(), result.getTeamUserData().get(0).getUserId());
         //bookId 저장 확인
-        assertEquals(result.getTeamData().getBookId(), savedTeam.getBookId());
+        assertEquals(result.getTeamData().getBookId(), savedTeam.getBook().getId());
         //teamuser 1명 저장 확인
         assertEquals(1, teamUserRepository.count(), "TeamUser 1명이어야 함");
         //redis 초대링크 확인

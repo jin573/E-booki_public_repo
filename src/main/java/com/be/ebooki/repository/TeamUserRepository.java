@@ -7,13 +7,12 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface TeamUserRepository extends JpaRepository<TeamUser, Integer>
-{
+public interface TeamUserRepository extends JpaRepository<TeamUser, Integer> {
     @Query("""
-        SELECT tu.user.id
-        FROM TeamUser tu
-        WHERE tu.team.id = :teamId
-    """)
+                SELECT tu.user.id
+                FROM TeamUser tu
+                WHERE tu.team.id = :teamId
+            """)
     List<Integer> findUserIdsByTeamId(Integer teamId);
 
     List<TeamUser> findAllByTeamId(Integer teamId);
@@ -21,5 +20,4 @@ public interface TeamUserRepository extends JpaRepository<TeamUser, Integer>
     boolean existsByTeamIdAndUserId(Integer teamId, Integer userId);
 
     long countByTeamId(Integer teamId);
-
 }

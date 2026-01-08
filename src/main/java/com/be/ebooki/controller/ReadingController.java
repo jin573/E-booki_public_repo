@@ -1,15 +1,17 @@
 package com.be.ebooki.controller;
 
-import com.be.ebooki.domain.EmojiType;
 import com.be.ebooki.dto.ReadingRequest;
 import com.be.ebooki.dto.ReadingResponse;
+import com.be.ebooki.enums.EmojiType;
 import com.be.ebooki.service.ReadingService;
 import com.be.ebooki.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,13 +43,15 @@ public class ReadingController {
 
 
     /** 하이라이트 생성 */
-    @PostMapping("/highlights")
+    @PostMapping("/{teamId}/highlights")
     public ResponseEntity<ReadingResponse.HighlightDTO> createHighlight(
+            @PathVariable Integer teamId,
             @RequestBody ReadingRequest.CreateHighlightDTO req
     ) {
         Integer userId = userService.getCurrentUserId();
+
         return ResponseEntity.ok(
-                readingService.createHighlight(req, userId)
+                readingService.createHighlight(req, userId, teamId)
         );
     }
 
@@ -76,5 +80,6 @@ public class ReadingController {
                 readingService.toggleEmoticon(commentId, userId, emoji)
         );
     }
+
 }
 

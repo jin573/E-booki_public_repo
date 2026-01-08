@@ -37,7 +37,7 @@ public class TeamController {
         Integer userId = userService.getCurrentUserId();
 
         TeamResponse.TeamInfoDTO teamInfoDTO = teamService.initTeam(userId, teamInitDTO.getTeamName(), teamInitDTO.getBookId());
-        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId());
+        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId(), userId);
         TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
                 .statusCode(200)
                 .message("팀 생성 성공 및 링크 생성 성공")
@@ -54,13 +54,13 @@ public class TeamController {
         //현재 api에서는 팀 정보, 도서 정보, 팀원 리스트를 가져와야 한다.
 
         TeamResponse.TeamInfoDTO teamInfoDTO = teamService.getTeamInfo(token);
-        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId());
+        BookResponse.BookPreviewDTO bookPreviewDTO = bookService.getBookPreview(teamInfoDTO.getTeamData().getBookId());
 
-        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO>builder()
                 .statusCode(200)
                 .message("팀, 도서, 팀원 정보 불러오기 성공")
                 .teamData(teamInfoDTO)
-                .bookData(bookDTO)
+                .bookData(bookPreviewDTO)
                 .build();
         return ResponseEntity.ok(responseDTO);
     }
@@ -72,7 +72,7 @@ public class TeamController {
         //요금제 검사
         //팀 검사
         TeamResponse.TeamInfoDTO teamInfoDTO = teamService.acceptInvite(userId, token); //팀에 올바르게 추가 된 경우
-        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId()); //도서를 가져와서 추가하기
+        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId(), userId); //도서를 가져와서 추가하기
 
         TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
                 .statusCode(200)

@@ -1,7 +1,7 @@
 package com.be.ebooki.repository;
 
-import com.be.ebooki.domain.EmojiType;
 import com.be.ebooki.domain.Emoticon;
+import com.be.ebooki.enums.EmojiType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

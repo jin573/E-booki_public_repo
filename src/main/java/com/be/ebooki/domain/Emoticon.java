@@ -1,5 +1,6 @@
 package com.be.ebooki.domain;
 
+import com.be.ebooki.enums.EmojiType;
 import jakarta.persistence.*;
 import lombok.*;
 

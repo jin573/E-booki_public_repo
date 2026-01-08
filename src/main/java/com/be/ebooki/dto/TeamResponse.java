@@ -2,16 +2,9 @@ package com.be.ebooki.dto;
 
 import com.be.ebooki.domain.Team;
 import com.be.ebooki.domain.TeamUser;
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
 import java.util.List;
-
-import java.util.List;
-
 @Getter
 public class TeamResponse {
 
@@ -46,7 +39,7 @@ public class TeamResponse {
             return TeamDTO.builder()
                     .id(team.getId())
                     .teamName(team.getTeamName())
-                    .bookId(team.getBookId())
+                    .bookId(team.getBook().getId())
                     .build();
         }
     }

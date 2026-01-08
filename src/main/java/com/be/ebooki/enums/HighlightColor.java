@@ -1,4 +1,4 @@
-package com.be.ebooki.domain;
+package com.be.ebooki.enums;
 
 public enum HighlightColor {
     YELLOW,

@@ -44,4 +44,17 @@ public class BookService {
                 .liked(liked)
                 .build();
     }
+
+    public BookResponse.BookPreviewDTO getBookPreview(Integer bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 도서입니다." + bookId));
+
+        return BookResponse.BookPreviewDTO.builder()
+                .id(book.getId())
+                .title(book.getTitle())
+                .author(book.getAuthor())
+                .publisher(book.getPublisher())
+                .bookImage(book.getBookImage())
+                .build();
+    }
 }
