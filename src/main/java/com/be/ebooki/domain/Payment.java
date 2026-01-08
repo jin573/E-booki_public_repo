@@ -26,4 +26,23 @@ public class Payment {
     private PaymentStatus status;  // READY, APPROVED, CANCELLED
 
     private LocalDateTime approvedAt;
+
+    @Builder
+    private Payment(
+            User user,
+            Plan plan,
+            int paidAmount,
+            String pgTid,
+            String paymentMethod,
+            PaymentStatus status,
+            LocalDateTime approvedAt
+    ) {
+        this.user = user;
+        this.plan = plan;
+        this.paidAmount = paidAmount;
+        this.pgTid = pgTid;
+        this.paymentMethod = paymentMethod;
+        this.status = status;
+        this.approvedAt = approvedAt;
+    }
 }

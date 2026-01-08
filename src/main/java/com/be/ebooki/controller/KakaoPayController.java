@@ -19,8 +19,8 @@ public class KakaoPayController {
     private final KakaoPayService kakaoPayService;
 
     @PostMapping("/ready")
-    public KakaoReadyResponse readyToKakaoPay() {
-        return kakaoPayService.kakaoPayReady();
+    public KakaoReadyResponse readyToKakaoPay(@RequestParam Long planId) {
+        return kakaoPayService.kakaoPayReady(planId);
     }
 
     @PostMapping("/success")

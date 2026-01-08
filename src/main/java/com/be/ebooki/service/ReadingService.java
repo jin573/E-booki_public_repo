@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -148,7 +149,7 @@ public class ReadingService {
                 .userId(userId)
                 .highlightId(req.getHighlightId())
                 .text(req.getText())
-                .createdAt(System.currentTimeMillis())
+                .createdAt(LocalDateTime.now())
                 .build();
 
         commentRepository.save(comment);

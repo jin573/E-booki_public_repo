@@ -40,7 +40,7 @@ public class ReadingResponse {
         private Integer userId;
         private Integer highlightId;
         private String text;
-        private Local createdAt;
+        private LocalDateTime createdAt;
         private EmoticonCountDTO emoticons;
         private UserEmoticonDTO myEmoticon;
     }

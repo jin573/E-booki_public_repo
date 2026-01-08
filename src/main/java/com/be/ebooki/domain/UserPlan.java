@@ -2,6 +2,7 @@ package com.be.ebooki.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.sql.ConnectionBuilder;
 import java.time.LocalDateTime;
 
 @Getter
@@ -31,4 +32,18 @@ public class UserPlan {
 
     private LocalDateTime startedAt;
     private LocalDateTime expiredAt;
+
+    @Builder
+    private UserPlan(
+            User user,
+            Plan plan,
+            int totalBookCount
+    ) {
+        this.user = user;
+        this.plan = plan;
+        this.totalBookCount = totalBookCount;
+        this.usedBookCount = 0;
+        this.status = UserPlanStatus.ACTIVE;
+        this.startedAt = LocalDateTime.now();
+    }
 }
