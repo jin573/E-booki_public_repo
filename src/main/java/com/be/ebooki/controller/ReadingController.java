@@ -56,13 +56,14 @@ public class ReadingController {
     }
 
     /** 댓글 생성 */
-    @PostMapping("/comments")
+    @PostMapping("/{teamId}/comments")
     public ResponseEntity<ReadingResponse.CommentDTO> createComment(
+            @PathVariable Integer teamId,
             @RequestBody ReadingRequest.CreateCommentDTO req
     ) {
         Integer userId = userService.getCurrentUserId();
         return ResponseEntity.ok(
-                readingService.createComment(req, userId)
+                readingService.createComment(req, userId, teamId)
         );
     }
 

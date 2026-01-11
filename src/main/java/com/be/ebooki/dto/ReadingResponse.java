@@ -37,6 +37,7 @@ public class ReadingResponse {
     public static class CommentDTO {
         private Integer id;
         private Integer userId;
+        private Integer bookId;
         private Integer highlightId;
         private String text;
         private Long createdAt;
