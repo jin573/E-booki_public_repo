@@ -1,8 +1,8 @@
 package com.be.ebooki.enums;
 
 public enum MessageType {
-    COMMENT,
-    EMOJI,
-    HIGHLIGHT,
+    COMMENT_CREATED,
+    EMOJI_CREATED,
+    HIGHLIGHT_CREATED,
     PAGE_SYNC
 }

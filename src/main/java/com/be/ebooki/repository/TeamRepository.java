@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Integer> {
 
-    boolean existsByTeamIdAndBookId(Integer teamId, Integer bookId);
+    boolean existsByIdAndBook_Id(Integer teamId, Integer bookId);
 }
