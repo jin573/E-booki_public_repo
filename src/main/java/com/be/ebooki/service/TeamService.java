@@ -24,6 +24,7 @@ public class TeamService {
 
     @Value("${app.base-url}")
     private String baseUrl;
+    private final UserPlanService userPlanService;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final TeamUserRepository teamUserRepository;
@@ -211,7 +212,6 @@ public class TeamService {
         List<TeamResponse.TeamListItemDTO> teamList = teams.stream()
                 .map(team -> {
 
-                    // 🔹 사용자 독서 진행률
                     UserBookProgress progress = userBookProgressRepository
                             .findByUserIdAndBookId(userId, team.getBook().getId())
                             .orElse(null);
@@ -220,21 +220,19 @@ public class TeamService {
                             ? progress.getPercentage()
                             : 0;
 
-                    // 🔹 별점 가능 여부
                     boolean alreadyRated =
                             userBookProgressRepository.existsByUserIdAndTeamIdAndRatingIsNotNull(userId, team.getId());
 
                     boolean canRate = percentage == 100 && !alreadyRated;
 
-                    // 🔹 팀 평균 별점
                     Double avgRating = userBookProgressRepository
                             .findAverageRatingByTeamId(team.getId());
 
                     return TeamResponse.TeamListItemDTO.builder()
                             .teamId(team.getId())
-                            .teamName(team.getTeamName()) // ✅ Team.teamName
+                            .teamName(team.getTeamName())
                             .bookTitle(team.getBook().getTitle())
-                            .bookImage(team.getBook().getBookImage()) // ✅ Book.bookImage
+                            .bookImage(team.getBook().getBookImage())
                             .memberProfileImages(
                                     teamUserRepository.findAllByTeamId(team.getId())
                                             .stream()

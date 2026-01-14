@@ -1,5 +1,7 @@
 package com.be.ebooki.repository;
 
+import com.be.ebooki.domain.Book;
+import com.be.ebooki.domain.User;
 import com.be.ebooki.domain.UserBookProgress;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -49,4 +51,5 @@ public interface UserBookProgressRepository
 """)
     Double findAverageRatingByTeamId(@Param("teamId") Integer teamId);
 
+    boolean existsByUserAndBook(User user, Book book);
 }
