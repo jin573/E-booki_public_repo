@@ -33,10 +33,6 @@ public interface UserBookProgressRepository
             """)
     List<Integer> findRatingsByUserIdsAndBook(List<Integer> userIds, Integer bookId);
 
-    boolean existsByUserIdAndTeamIdAndRatingIsNotNull(
-            Integer userId,
-            Integer teamId
-    );
 
     Optional<UserBookProgress> findByUserIdAndBookId(
             Integer userId,
@@ -46,10 +42,10 @@ public interface UserBookProgressRepository
     @Query("""
     select avg(ubp.rating)
     from UserBookProgress ubp
-    where ubp.team.id = :teamId
+    where ubp.book.id = :bookId
       and ubp.rating is not null
 """)
-    Double findAverageRatingByTeamId(@Param("teamId") Integer teamId);
+    Double findAverageRatingByBookId(@Param("bookId") Integer bookId);
 
     boolean existsByUserAndBook(User user, Book book);
 }

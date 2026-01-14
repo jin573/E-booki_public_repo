@@ -9,7 +9,7 @@ import java.util.List;
 
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Integer> {
-    List<Team> findAllByUserId(Integer userId);
 
+    List<Team> findAllByIdIn(List<Integer> teamIds);
     boolean existsByIdAndBook_Id(Integer teamId, Integer bookId);
 }
