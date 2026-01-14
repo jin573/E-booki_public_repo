@@ -69,6 +69,13 @@ public class TeamResponse {
         private String bookImage;
 
         private List<String> memberProfileImages;
+
+        private Integer progressPercentage;
+
+        // progress가 100이고, 사용자가 별점을 안매긴 경우만 true
+        private Boolean canRate;
+        //팀평균 별점 -> 없을땐 null
+        private Double averageRating;
     }
 
     @Getter

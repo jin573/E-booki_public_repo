@@ -1,19 +1,16 @@
 package com.be.ebooki.controller;
 
-import com.be.ebooki.domain.Team;
-import com.be.ebooki.dto.BookResponse;
+
 import com.be.ebooki.dto.TeamRequest;
+import com.be.ebooki.dto.BookResponse;
+
 import com.be.ebooki.dto.TeamResponse;
 import com.be.ebooki.service.BookService;
 import com.be.ebooki.service.TeamService;
 import com.be.ebooki.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.awt.print.Book;
 
 @RestController
 @RequestMapping("/api/teams")
@@ -83,6 +80,26 @@ public class TeamController {
 
         return ResponseEntity.ok(responseDTO);
 
+    }
+
+    @GetMapping
+    public ResponseEntity<TeamResponse.TeamListResponse> getMyTeams() {
+        Integer userId = userService.getCurrentUserId();
+
+        TeamResponse.TeamListResponse response =
+                teamService.getMyTeams(userId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{teamId}")
+    public ResponseEntity<Void> updateTeamName(
+            @PathVariable Integer teamId,
+            @RequestBody TeamRequest.UpdateTeamName request
+    ) {
+        teamService.updateTeamName(teamId, request.getTeamName());
+
+        return ResponseEntity.ok().build();
     }
 
 }

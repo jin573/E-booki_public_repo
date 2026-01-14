@@ -4,6 +4,8 @@ import com.be.ebooki.enums.EmojiType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "emoticon")
 @Getter
@@ -24,5 +26,5 @@ public class Emoticon {
     @Enumerated(EnumType.STRING)
     private EmojiType emoji;
 
-    private Long createdAt;
+    private LocalDateTime createdAt;
 }

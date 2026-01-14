@@ -3,6 +3,7 @@ package com.be.ebooki.repository;
 import com.be.ebooki.domain.UserBookProgress;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,5 +30,23 @@ public interface UserBookProgressRepository
               AND ubp.rating IS NOT NULL
             """)
     List<Integer> findRatingsByUserIdsAndBook(List<Integer> userIds, Integer bookId);
+
+    boolean existsByUserIdAndTeamIdAndRatingIsNotNull(
+            Integer userId,
+            Integer teamId
+    );
+
+    Optional<UserBookProgress> findByUserIdAndBookId(
+            Integer userId,
+            Integer bookId
+    );
+
+    @Query("""
+    select avg(ubp.rating)
+    from UserBookProgress ubp
+    where ubp.team.id = :teamId
+      and ubp.rating is not null
+""")
+    Double findAverageRatingByTeamId(@Param("teamId") Integer teamId);
 
 }

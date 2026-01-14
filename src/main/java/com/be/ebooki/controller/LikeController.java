@@ -3,6 +3,7 @@ package com.be.ebooki.controller;
 import com.be.ebooki.domain.Book;
 import com.be.ebooki.dto.BookResponse;
 import com.be.ebooki.service.LikeService;
+import com.be.ebooki.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,12 +20,13 @@ import java.util.stream.Collectors;
 public class LikeController {
 
     private final LikeService likeService;
+    private final UserService userService;
 
     //북마크 토글 (등록/해제)
-    @PostMapping("/{userId}/{bookId}")
+    @PostMapping("/{bookId}")
     public ResponseEntity<Map<String, Object>> toggleLike(
-            @PathVariable Integer userId,
             @PathVariable Integer bookId) {
+        Integer userId = userService.getCurrentUserId();
 
         String message = likeService.toggleLike(userId, bookId);
 

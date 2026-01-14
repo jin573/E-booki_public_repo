@@ -4,6 +4,7 @@ import com.be.ebooki.domain.Team;
 import com.be.ebooki.domain.TeamUser;
 import com.be.ebooki.domain.User;
 import com.be.ebooki.domain.Book;
+import com.be.ebooki.domain.UserBookProgress;
 import com.be.ebooki.dto.TeamResponse;
 import com.be.ebooki.repository.*;
 import org.springframework.transaction.annotation.Propagation;
@@ -202,29 +203,63 @@ public class TeamService {
         }
     }
 
-    public Double calculateTeamRating(Integer teamId) {
+    public TeamResponse.TeamListResponse getMyTeams(Integer userId) {
 
-        // 팀원 user list 가져오기
-        List<Integer> memberIds = teamUserRepository.findUserIdsByTeamId(teamId);
 
-        // 팀이 읽는 책
+        List<Team> teams = teamRepository.findAllByUserId(userId);
+
+        List<TeamResponse.TeamListItemDTO> teamList = teams.stream()
+                .map(team -> {
+
+                    // 🔹 사용자 독서 진행률
+                    UserBookProgress progress = userBookProgressRepository
+                            .findByUserIdAndBookId(userId, team.getBook().getId())
+                            .orElse(null);
+
+                    int percentage = progress != null
+                            ? progress.getPercentage()
+                            : 0;
+
+                    // 🔹 별점 가능 여부
+                    boolean alreadyRated =
+                            userBookProgressRepository.existsByUserIdAndTeamIdAndRatingIsNotNull(userId, team.getId());
+
+                    boolean canRate = percentage == 100 && !alreadyRated;
+
+                    // 🔹 팀 평균 별점
+                    Double avgRating = userBookProgressRepository
+                            .findAverageRatingByTeamId(team.getId());
+
+                    return TeamResponse.TeamListItemDTO.builder()
+                            .teamId(team.getId())
+                            .teamName(team.getTeamName()) // ✅ Team.teamName
+                            .bookTitle(team.getBook().getTitle())
+                            .bookImage(team.getBook().getBookImage()) // ✅ Book.bookImage
+                            .memberProfileImages(
+                                    teamUserRepository.findAllByTeamId(team.getId())
+                                            .stream()
+                                            .map(teamUser -> teamUser.getUser().getProfileImage())
+                                            .toList()
+                            )
+                            .progressPercentage(percentage)
+                            .canRate(canRate)
+                            .averageRating(avgRating)
+                            .build();
+
+                })
+                .toList();
+
+        return TeamResponse.TeamListResponse.builder()
+                .teams(teamList)
+                .build();
+    }
+
+    public void updateTeamName(Integer teamId, String teamName) {
+
         Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("팀 없음"));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
 
-        Integer bookId = team.getBook().getId();
-
-        // 해당 유저들의 UserBookProgress 중 rating 있는 것만 조회
-        List<Integer> ratings = userBookProgressRepository
-                .findRatingsByUserIdsAndBook(memberIds, bookId); // rating != null인 것만
-
-        if (ratings.isEmpty()) {
-            return null; // 아직 아무도 평가 안함
-        }
-
-        return ratings.stream()
-                .mapToInt(r -> r)
-                .average()
-                .orElse(0);
+        team.updateTeamName(teamName);
     }
 
     public boolean validateMember(Integer teamId, Integer userId) {
