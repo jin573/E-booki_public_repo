@@ -11,5 +11,5 @@ import java.util.List;
 public interface TeamRepository extends JpaRepository<Team, Integer> {
     List<Team> findAllByUserId(Integer userId);
 
-    boolean existsByTeamIdAndBookId(Integer teamId, Integer bookId);
+    boolean existsByIdAndBook_Id(Integer teamId, Integer bookId);
 }

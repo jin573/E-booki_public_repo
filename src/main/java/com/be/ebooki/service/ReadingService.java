@@ -4,9 +4,12 @@ import com.be.ebooki.domain.*;
 import com.be.ebooki.dto.ReadingRequest;
 
 import com.be.ebooki.dto.ReadingResponse;
+import com.be.ebooki.dto.StompResponse;
 import com.be.ebooki.enums.EmojiType;
 import com.be.ebooki.enums.HighlightColor;
+
 import com.be.ebooki.repository.*;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -104,13 +107,17 @@ public class ReadingService {
             Integer userId,
             Integer teamId) {
 
-        if (!teamService.isTeamBook(teamId, req.getBookId())) {
+        //해당 유저가 정말로 해당 팀에 속해있는가?
+        if(!teamService.validateMember(teamId, userId)){
+            throw new IllegalArgumentException("존재하지 않는 팀원입니다.");
+        }
+
+        //팀의 책인지 검증
+        if (!teamService.validateTeamBook(teamId, req.getBookId())) {
             throw new IllegalArgumentException("팀에 속하지 않은 책입니다.");
         }
 
-        if(!teamService.isMember(teamId, userId)){
-            throw new IllegalArgumentException("존재하지 않는 팀원입니다.");
-        }
+
         Highlight highlight = highlightRepository.save(
                 Highlight.builder()
                     .userId(userId)
@@ -136,7 +143,7 @@ public class ReadingService {
 
         //STOMP 얹기
         simpMessagingTemplate.convertAndSend("/topic/teams/" + highlight.getTeamId() + "/books/" + highlight.getBookId(),
-                highlightDTO
+                new StompResponse<>(MessageType.HIGHLIGHT_CREATED, highlight.getTeamId(), highlight.getBookId(), highlightDTO)
         );
 
         return highlightDTO;
@@ -145,32 +152,66 @@ public class ReadingService {
     /** 댓글 생성 */
     public ReadingResponse.CommentDTO createComment(
             ReadingRequest.CreateCommentDTO req,
-            Integer userId) {
+            Integer userId,
+            Integer teamId) {
 
+        if(!teamService.validateMember(teamId, userId)){
+            throw new IllegalArgumentException("존재하지 않는 팀원입니다.");
+        }
+
+        Highlight highlight = highlightRepository.findById(req.getHighlightId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 하이라이트 입니다."));
+
+        if (!highlight.getTeamId().equals(teamId)) {
+            throw new IllegalArgumentException("해당 팀에서 접근할 수 없는 하이라이트입니다.");
+        }
+
+        //코멘트 저장
         Comment comment = Comment.builder()
                 .userId(userId)
-                .highlightId(req.getHighlightId())
+                .highlightId(highlight.getId())
                 .text(req.getText())
                 .createdAt(LocalDateTime.now())
                 .build();
 
         commentRepository.save(comment);
 
-        return ReadingResponse.CommentDTO.builder()
+
+        //코멘트 dto 변환 후 stomp 전송
+        ReadingResponse.CommentDTO commentDTO = ReadingResponse.CommentDTO.builder()
                 .id(comment.getId())
                 .userId(userId)
+                .bookId(highlight.getBookId())
                 .highlightId(comment.getHighlightId())
                 .text(comment.getText())
                 .createdAt(comment.getCreatedAt())
                 .emoticons(new ReadingResponse.EmoticonCountDTO(0, 0))
                 .myEmoticon(new ReadingResponse.UserEmoticonDTO(false, false))
                 .build();
+
+        simpMessagingTemplate.convertAndSend("/topic/teams/" + teamId + "/books/" + commentDTO.getBookId(),
+                new StompResponse<>(MessageType.COMMENT_CREATED, teamId, commentDTO.getBookId(), commentDTO)
+        );
+        return commentDTO;
     }
 
     public ReadingResponse.EmoticonCountDTO toggleEmoticon(Integer commentId, Integer userId, EmojiType emojiType) {
 
         var existing = emoticonRepository
                 .findByCommentIdAndUserIdAndEmoji(commentId, userId, emojiType);
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+
+        Highlight highlight = highlightRepository.findById(comment.getHighlightId())
+                .orElseThrow(() -> new IllegalStateException("잘못된 하이라이트 입니다."));
+
+        Integer teamId = highlight.getTeamId();
+        Integer bookId = highlight.getBookId();
+
+        if (!teamService.validateMember(teamId, userId)) {
+            throw new IllegalArgumentException("팀 멤버만 이모지를 사용할 수 있습니다.");
+        }
 
         if (existing.isPresent()) {
             emoticonRepository.delete(existing.get());
@@ -180,6 +221,10 @@ public class ReadingService {
             newEmoji.setCommentId(commentId);
             newEmoji.setEmoji(emojiType);
             emoticonRepository.save(newEmoji);
+
+            simpMessagingTemplate.convertAndSend("/topic/teams/" + teamId + "/books/" + bookId,
+                    new StompResponse<>(MessageType.EMOJI_CREATED, teamId, bookId, buildEmoticonCount(commentId))
+            );
         }
 
         return buildEmoticonCount(commentId);

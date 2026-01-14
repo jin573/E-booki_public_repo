@@ -260,10 +260,11 @@ public class TeamService {
         team.updateTeamName(teamName);
     }
 
-    public boolean isMember(Integer teamId, Integer userId) {
+    public boolean validateMember(Integer teamId, Integer userId) {
         return teamUserRepository.existsByTeamIdAndUserId(teamId, userId);
     }
-    public boolean isTeamBook(Integer teamId, Integer bookId) {
-        return teamRepository.existsByTeamIdAndBookId(teamId, bookId);
+
+    public boolean validateTeamBook(Integer teamId, Integer bookId) {
+        return teamRepository.existsByIdAndBook_Id(teamId, bookId);
     }
 }

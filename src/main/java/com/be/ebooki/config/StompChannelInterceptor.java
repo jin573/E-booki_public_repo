@@ -40,7 +40,7 @@ public class StompChannelInterceptor implements ChannelInterceptor {
 
             log.info("SUBSCRIBE user={} dest={}", userId, destination);
 
-            if (!teamService.isMember(teamId, userId)) {
+            if (!teamService.validateMember(teamId, userId)) {
                 throw new IllegalArgumentException("팀원이 아닙니다.");
             }
         }
