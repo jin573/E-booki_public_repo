@@ -207,8 +207,13 @@ public class TeamService {
     public TeamResponse.TeamListResponse getMyTeams(Integer userId) {
 
 
-        List<Team> teams = teamRepository.findAllByUserId(userId);
+        List<TeamUser> teamUsers = teamUserRepository.findAllByUserId(userId);
 
+        List<Integer> teamIds = teamUsers.stream()
+                .map(tu -> tu.getTeam().getId())
+                .toList();
+
+        List<Team> teams = teamRepository.findAllByIdIn(teamIds);
         List<TeamResponse.TeamListItemDTO> teamList = teams.stream()
                 .map(team -> {
 
@@ -220,13 +225,12 @@ public class TeamService {
                             ? progress.getPercentage()
                             : 0;
 
-                    boolean alreadyRated =
-                            userBookProgressRepository.existsByUserIdAndTeamIdAndRatingIsNotNull(userId, team.getId());
+                    boolean alreadyRated = progress != null && progress.getRating() != null;
 
                     boolean canRate = percentage == 100 && !alreadyRated;
 
                     Double avgRating = userBookProgressRepository
-                            .findAverageRatingByTeamId(team.getId());
+                            .findAverageRatingByBookId(team.getBook().getId());
 
                     return TeamResponse.TeamListItemDTO.builder()
                             .teamId(team.getId())

@@ -8,6 +8,7 @@ import com.be.ebooki.dto.StompResponse;
 import com.be.ebooki.enums.EmojiType;
 import com.be.ebooki.enums.HighlightColor;
 
+import com.be.ebooki.enums.MessageType;
 import com.be.ebooki.repository.*;
 
 import lombok.RequiredArgsConstructor;
