@@ -1,5 +1,6 @@
 package com.be.ebooki.dto;
 
+import com.be.ebooki.enums.HighlightColor;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -19,7 +20,7 @@ public class ReadingResponse {
         private Integer spineIndex;
         private String cfi;
         private String text;
-        private String color;
+        private HighlightColor color;
     }
 
     @Data
@@ -65,7 +66,7 @@ public class ReadingResponse {
     @Getter
     @Builder
     @AllArgsConstructor
-    public class ReadingTimelineItemDTO {
+    public static class ReadingTimelineItemDTO {
 
         private String type; // "HIGHLIGHT" | "COMMENT"
 
@@ -76,5 +77,25 @@ public class ReadingResponse {
 
         private LocalDateTime createdAt;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProgressDTO {
+        private String cfi;
+        private Integer spineIndex;
+    }
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReadingEntryDTO {
+        private Integer bookId;
+        private ProgressDTO progress;
+        private List<HighlightDTO> highlights;
+    }
+
+
 
 }

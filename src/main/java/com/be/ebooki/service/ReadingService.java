@@ -6,12 +6,11 @@ import com.be.ebooki.dto.ReadingRequest;
 import com.be.ebooki.dto.ReadingResponse;
 import com.be.ebooki.enums.EmojiType;
 import com.be.ebooki.enums.HighlightColor;
-import com.be.ebooki.repository.CommentRepository;
-import com.be.ebooki.repository.EmoticonRepository;
-import com.be.ebooki.repository.HighlightRepository;
+import com.be.ebooki.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +24,9 @@ public class ReadingService {
     private final EmoticonRepository emoticonRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final TeamService teamService;
+    private final UserRepository userRepository;
+    private final BookRepository bookRepository;
+    private final UserBookProgressRepository userBookProgressRepository;
 
 
     public ReadingResponse.HighlightListDTO getHighlights(Integer bookId) {
@@ -39,7 +41,7 @@ public class ReadingService {
                         .spineIndex(h.getSpineIndex())
                         .cfi(h.getCfi())
                         .text(h.getText())
-                        .color(h.getColor().toString())
+                        .color(h.getColor())
                         .build())
                 .toList();
 
@@ -129,7 +131,7 @@ public class ReadingService {
                 .spineIndex(highlight.getSpineIndex())
                 .cfi(highlight.getCfi())
                 .text(highlight.getText())
-                .color(highlight.getColor().name())
+                .color(highlight.getColor())
                 .build();
 
         //STOMP 얹기
@@ -181,6 +183,54 @@ public class ReadingService {
         }
 
         return buildEmoticonCount(commentId);
+    }
+
+    @Transactional(readOnly = true)
+    public ReadingResponse.ReadingEntryDTO getReadingEntry(
+            Integer userId,
+            Integer teamId,
+            Integer bookId
+    ) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
+
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("책 없음"));
+
+        UserBookProgress progress =
+                userBookProgressRepository.findByUserIdAndBookId(userId, bookId)
+                        .orElseThrow(() -> new IllegalStateException("독서 진행 정보 없음"));
+
+        //  팀에 속한 전체 하이라이트 조회 (지금은 전부)
+        List<Highlight> highlights =
+                highlightRepository.findAllByBookId(bookId);
+
+        return ReadingResponse.ReadingEntryDTO.builder()
+                .bookId(book.getId())
+                .progress(
+                        ReadingResponse.ProgressDTO.builder()
+                                .cfi(progress.getCfi())
+                                .spineIndex(progress.getSpineIndex())
+                                .build()
+                )
+                .highlights(
+                        highlights.stream()
+                                .map(h -> ReadingResponse.HighlightDTO.builder()
+                                        .id(h.getId())
+                                        .userId(userId)
+                                        .teamId(teamId)
+                                        .bookId(bookId)
+                                        .spineIndex(h.getSpineIndex())
+                                        .cfi(h.getCfi())
+                                        .text(h.getText())
+                                        .color(h.getColor())
+                                        .build()
+                                )
+                                .toList()
+                )
+                .build();
+
+
     }
 
 

@@ -24,6 +24,21 @@ public class ReadingController {
     private final ReadingService readingService;
     private final UserService userService;
 
+    //진입 시 마지막 위치 조회
+    @GetMapping("/entry")
+    public ResponseEntity<ReadingResponse.ReadingEntryDTO> getReadingEntry(
+            @RequestParam Integer teamId,
+            @RequestParam Integer bookId
+    ) {
+        Integer userId = userService.getCurrentUserId();
+
+        ReadingResponse.ReadingEntryDTO response =
+                readingService.getReadingEntry(userId, teamId, bookId);
+
+        return ResponseEntity.ok(response);
+    }
+
+
     @GetMapping("/{bookId}/highlights")
     public ResponseEntity<ReadingResponse.HighlightListDTO> getHighlights(
             @PathVariable Integer bookId
