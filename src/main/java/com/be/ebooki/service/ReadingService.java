@@ -196,7 +196,7 @@ public class ReadingService {
         return commentDTO;
     }
 
-    public ReadingResponse.EmoticonCountDTO toggleEmoticon(Integer commentId, Integer userId, EmojiType emojiType) {
+    public ReadingResponse.EmoticonCountDTO toggleEmoticon(Integer commentId, Integer teamId, Integer userId, EmojiType emojiType) {
 
         var existing = emoticonRepository
                 .findByCommentIdAndUserIdAndEmoji(commentId, userId, emojiType);
@@ -207,7 +207,6 @@ public class ReadingService {
         Highlight highlight = highlightRepository.findById(comment.getHighlightId())
                 .orElseThrow(() -> new IllegalStateException("잘못된 하이라이트 입니다."));
 
-        Integer teamId = highlight.getTeamId();
         Integer bookId = highlight.getBookId();
 
         if (!teamService.validateMember(teamId, userId)) {
@@ -234,22 +233,21 @@ public class ReadingService {
     @Transactional(readOnly = true)
     public ReadingResponse.ReadingEntryDTO getReadingEntry(
             Integer userId,
-            Integer teamId,
-            Integer bookId
+            ReadingRequest.ReadingEntryDTO req
     ) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
 
-        Book book = bookRepository.findById(bookId)
+        Book book = bookRepository.findById(req.getBookId())
                 .orElseThrow(() -> new IllegalArgumentException("책 없음"));
 
         UserBookProgress progress =
-                userBookProgressRepository.findByUserIdAndBookId(userId, bookId)
+                userBookProgressRepository.findByUserIdAndBookId(userId, req.getBookId())
                         .orElseThrow(() -> new IllegalStateException("독서 진행 정보 없음"));
 
         //  팀에 속한 전체 하이라이트 조회 (지금은 전부)
         List<Highlight> highlights =
-                highlightRepository.findAllByBookId(bookId);
+                highlightRepository.findAllByBookId(req.getBookId());
 
         return ReadingResponse.ReadingEntryDTO.builder()
                 .bookId(book.getId())
@@ -264,8 +262,8 @@ public class ReadingService {
                                 .map(h -> ReadingResponse.HighlightDTO.builder()
                                         .id(h.getId())
                                         .userId(userId)
-                                        .teamId(teamId)
-                                        .bookId(bookId)
+                                        .teamId(req.getTeamId())
+                                        .bookId(req.getBookId())
                                         .spineIndex(h.getSpineIndex())
                                         .cfi(h.getCfi())
                                         .text(h.getText())

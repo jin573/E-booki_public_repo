@@ -24,17 +24,13 @@ public class LikeController {
 
     //북마크 토글 (등록/해제)
     @PostMapping("/{bookId}")
-    public ResponseEntity<Map<String, Object>> toggleLike(
+    public ResponseEntity<BookResponse.ToggleDTO> toggleLike(
             @PathVariable Integer bookId) {
         Integer userId = userService.getCurrentUserId();
 
-        String message = likeService.toggleLike(userId, bookId);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", 200);
-        response.put("message", message);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                likeService.toggleLike(userId, bookId)
+        );
     }
 
 }
