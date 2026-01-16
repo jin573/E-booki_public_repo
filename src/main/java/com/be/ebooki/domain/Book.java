@@ -32,7 +32,4 @@ public class Book {
 
     @Column(name="rating")
     private Double rating;
-
-
-
 }
