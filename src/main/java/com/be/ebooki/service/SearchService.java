@@ -25,7 +25,7 @@ public class SearchService {
 
         Pageable pageable = PageRequest.of(0, 10);  // 최대 10개 반환
 
-        Page<Book> resultPage = bookRepository.searchBook(query, pageable);
+        Page<Book> resultPage = bookRepository.searchBooks(query, pageable);
         List<Book> results = resultPage.getContent();
 
         // Book → BookListDTO 변환
