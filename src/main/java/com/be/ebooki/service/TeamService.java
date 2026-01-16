@@ -30,10 +30,7 @@ public class TeamService {
     private final TeamUserRepository teamUserRepository;
     private final BookRepository bookRepository;
     private final UserBookProgressRepository userBookProgressRepository;
-
     private final RedisService redisService;
-
-    private static final String INVITE_LINK_PREFIX = "invite:team:%d";
 
     private static final String INVITE_LOCKED_PREFIX = "lock:team:create:%s:%s:%d"; //초대링크 생성시 사용
     private static final String JOIN_LOCKED_PREFIX = "lock:team:join:%d";//초대링크 접속시 사용
@@ -48,6 +45,7 @@ public class TeamService {
             throw new IllegalStateException("초대 링크 생성 중복 요청입니다.");
         }
 
+        //유효성 검증
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
 
@@ -55,14 +53,16 @@ public class TeamService {
             throw new IllegalArgumentException("팀 이름은 필수입니다");
         }
 
+        //팀 생성 및 유저 추가 (init 이므로 해당 api를 호출한 유저 추가)
         TeamResponse.TeamDTO teamDTO = createTeam(teamName, bookId); //팀 생성
         TeamResponse.TeamUserDTO teamUserDTO = joinTeamAndUser(userId, teamDTO); //팀 생성 후 유저 추가
-
         List<TeamResponse.TeamUserDTO> teamUsersDTO = teamUserRepository.findAllByTeamId(teamDTO.getId())
                 .stream()
                 .map(TeamResponse.TeamUserDTO::from)
                 .toList();
-        String inviteUrl = inviteTeam(userId, teamDTO); //그 후 링크 생성 일괄 처리 -> 트랜잭션 필요
+
+        //그 후 링크 생성 일괄 처리 -> 트랜잭션 필요
+        String inviteUrl = inviteTeam(userId, teamDTO);
 
         return TeamResponse.TeamInfoDTO.builder()
                 .teamData(teamDTO)
@@ -120,28 +120,29 @@ public class TeamService {
             throw new IllegalArgumentException("팀 이름은 필수입니다");
         }
 
-        //초대 링크를 만들어서 반환
-        String inviteKey = INVITE_LINK_PREFIX.formatted(team.getId());
-        String inviteValue = redisService.getValues(inviteKey); //value 불러오기
-
-        //초대링크 만료 시 재발급
-        if(inviteValue == null || inviteValue.equals("false")){
-            final String randomCode = UUID.randomUUID().toString();
-            redisService.setValues(inviteKey, randomCode, RedisService.expireTime());
-            inviteValue = randomCode;
+        //기존 key 조회
+        String existingKey = redisService.getValues("invite:team:" + team.getId());
+        if(existingKey != null){
+            return baseUrl + "/api/teams/invite?token=" + existingKey;
         }
 
-        //초대링크 유효 시 그대로 return
-        return baseUrl + "/api/teams/invite?token=" + inviteValue;
+        //없는 경우 새로 만들기
+        String inviteKey = UUID.randomUUID().toString();
+        redisService.setValues("invite:team:" + team.getId(), String.valueOf(team.getId()), RedisService.expireTime());
+        redisService.setValues("invite:token:" + inviteKey, String.valueOf(team.getId()), RedisService.expireTime());
+
+        return baseUrl + "/api/teams/invite?token=" + inviteKey;
     }
 
     public TeamResponse.TeamInfoDTO getTeamInfo(String token) {
-        Integer teamId = redisService.findByTeamByToken(token); //INVITE_LINK_PREFIX 로 만들어진 토큰 필요
+        String inviteToken = redisService.getValues("invite:token:"+token);
 
         // 존재하지 않거나 만료된 링크면 예외 처리
-        if (teamId == null) {
+        if (inviteToken == null || inviteToken.equals("false")) {
             throw new IllegalArgumentException("유효하지 않거나 만료된 초대 링크입니다.");
         }
+
+        Integer teamId = Integer.parseInt(inviteToken);
 
         // team 조회
         Team team = teamRepository.findById(teamId)
