@@ -41,8 +41,6 @@ out/
 
 ### Jwt ###
 src/main/resources/application-dev.properties
-src/main/resources/application-prod.properties
-
 ### .env ###
 .env.prod
 .env.dev
