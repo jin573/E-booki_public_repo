@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+name: Deploy Ebooki to EC2
 
 on:
   push:
@@ -7,12 +7,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
-    - uses: actions/checkout@v4
-
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
       with:
@@ -22,12 +18,11 @@ jobs:
         script: |
           cd ~/ebooki
 
-          git fetch --all
-          git reset --hard origin/main
+          docker-compose pull app
 
           docker-compose stop app || true
           docker-compose rm -f app || true
 
-          docker-compose up -d --build app
+          docker-compose up -d app
 
           docker-compose ps
