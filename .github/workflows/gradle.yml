@@ -18,11 +18,10 @@ jobs:
         script: |
           cd ~/ebooki
 
-          docker-compose pull app
-
           docker-compose stop app || true
           docker-compose rm -f app || true
-
+        
+          docker-compose build app
           docker-compose up -d app
-
+        
           docker-compose ps
