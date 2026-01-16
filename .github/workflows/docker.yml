@@ -1,0 +1,33 @@
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd ~/ebooki
+
+          git fetch --all
+          git reset --hard origin/main
+
+          docker-compose stop app || true
+          docker-compose rm -f app || true
+
+          docker-compose up -d --build app
+
+          docker-compose ps
