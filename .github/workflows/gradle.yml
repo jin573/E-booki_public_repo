@@ -9,6 +9,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    #1.레포 체크아웃
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    #2.Docker Hub 로그인
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+    #3.이미지 빌드 & 푸시
+    - name: Build and Push Docker Image
+      run: |
+        docker build -t cherishwish/ebooki:latest .
+        docker push cherishwish/ebooki:latest
+
+    # 4.EC2에서 pull & 재실행
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
       with:
@@ -18,10 +36,9 @@ jobs:
         script: |
           cd ~/ebooki
 
+          docker-compose pull app
           docker-compose stop app || true
           docker-compose rm -f app || true
-        
-          docker-compose build app
           docker-compose up -d app
-        
+
           docker-compose ps
