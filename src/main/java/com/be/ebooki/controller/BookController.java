@@ -23,19 +23,20 @@ public class BookController {
         return ResponseEntity.ok(bookService.getAllBooks());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<BookResponse.BookDetailDTO> getBookDetail(@PathVariable Integer id) {
-        //userId가져오기
+    @GetMapping("/{bookId}")
+    public ResponseEntity<BookResponse.BookDetailDTO> getBookDetail(@PathVariable Integer bookId) {
+        //좋아요 여부 판단을 위해 userId 가져감
         Integer userId = userService.getCurrentUserId();
 
-        return ResponseEntity.ok(bookService.getBookDetail(id, userId));
+        return ResponseEntity.ok(bookService.getBookDetail(bookId, userId));
     }
 
-    @GetMapping("/books/{bookId}/reading-timeline")
+    @GetMapping("/{bookId}/timeline")
     public ResponseEntity<List<ReadingResponse.ReadingTimelineItemDTO>> getReadingTimeline(
             @PathVariable Integer bookId,
             @RequestParam(defaultValue = "ALL") String type
     ) {
+        //현재 사용자가 작성한 내용만 보여주가 위해 userId가져감
         Integer userId = userService.getCurrentUserId();
         return ResponseEntity.ok(
                 bookService.getBookReadingDetail(bookId, userId,type)

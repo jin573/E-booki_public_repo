@@ -1,6 +1,7 @@
 package com.be.ebooki.dto;
 
 import lombok.Data;
+import org.springframework.web.bind.annotation.RequestParam;
 
 public class ReadingRequest {
 
@@ -17,5 +18,18 @@ public class ReadingRequest {
     public static class CreateCommentDTO {
         private Integer highlightId;
         private String text;
+    }
+
+    @Data
+    public static class CreateEmoticonsDTO {
+        private Integer teamId;
+        private Integer commentId;
+        private String type;
+    }
+
+    @Data
+    public static class ReadingEntryDTO {
+        private Integer teamId;
+        private Integer bookId;
     }
 }

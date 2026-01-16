@@ -52,4 +52,12 @@ public class BookResponse {
         private String publisher;
         private String bookImage;
     }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    public static class ToggleDTO {
+        private Integer bookId;
+        private boolean liked;
+    }
 }

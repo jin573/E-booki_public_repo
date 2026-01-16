@@ -28,6 +28,7 @@ public class BookService {
     private final CommentRepository commentRepository;
 
     public List<BookResponse.BookListDTO> getAllBooks() {
+        //findAll로 DB도서 전체 가져옴
         return bookRepository.findAll().stream()
                 .map(book -> BookResponse.BookListDTO.builder()
                         .id(book.getId())
@@ -39,8 +40,10 @@ public class BookService {
     }
 
     public BookResponse.BookDetailDTO getBookDetail(Integer bookId, Integer userId) {
+        //조회하려는 책 찾기
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 도서입니다." + bookId));
+        //userId와 bookId가지고 좋아요 여부 찾기
         boolean liked = likeRepository.existsByUserIdAndBookId(userId, bookId);
 
         return BookResponse.BookDetailDTO.builder()
@@ -58,17 +61,18 @@ public class BookService {
     @Transactional(readOnly = true)
     public List<ReadingResponse.ReadingTimelineItemDTO> getBookReadingDetail(Integer bookId, Integer userId,
                                                                              String type) {
-
+        //조회하려는 필터링 타입으로 맞추기
         TimelineType timelineType = TimelineType.valueOf(type);
 
-        // 존재 여부만 체크
+        // 책의 존재 여부 체크
         bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 도서입니다."));
 
+        //사용자가 생성한 하이라이트와 댓글을 담을 List 생성
         List<ReadingResponse.ReadingTimelineItemDTO> highlights = List.of();
         List<ReadingResponse.ReadingTimelineItemDTO> comments = List.of();
 
-        // 🔹 하이라이트 포함 조건
+        //조건을 가지고 하이라이트 찾기
         if (timelineType == TimelineType.ALL || timelineType == TimelineType.HIGHLIGHT) {
             highlights = highlightRepository.findAllByBookId(bookId)
                     .stream()
@@ -83,7 +87,7 @@ public class BookService {
                     .toList();
         }
 
-        // 🔹 코멘트 포함 조건
+        //조건을 가지고 코멘트 찾기
         if (timelineType == TimelineType.ALL || timelineType == TimelineType.COMMENT) {
             comments = commentRepository.findAllByBookId(bookId)
                     .stream()
@@ -96,7 +100,7 @@ public class BookService {
                     .toList();
         }
 
-        // 🔹 최신순 정렬 (공통)
+        //최신순으로 정렬
         return Stream.concat(highlights.stream(), comments.stream())
                 .sorted(
                         Comparator.comparing(
