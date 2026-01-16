@@ -1,18 +1,11 @@
 package com.be.ebooki.controller;
-
-import com.be.ebooki.domain.Book;
 import com.be.ebooki.dto.BookResponse;
 import com.be.ebooki.service.LikeService;
 import com.be.ebooki.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/likes")
@@ -26,6 +19,7 @@ public class LikeController {
     @PostMapping("/{bookId}")
     public ResponseEntity<BookResponse.ToggleDTO> toggleLike(
             @PathVariable Integer bookId) {
+        //사용자의 기존 토글여부 확인으로 userId 가져가기
         Integer userId = userService.getCurrentUserId();
 
         return ResponseEntity.ok(
