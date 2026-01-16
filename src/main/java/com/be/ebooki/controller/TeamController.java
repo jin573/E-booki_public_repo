@@ -30,7 +30,7 @@ public class TeamController {
 
     @PostMapping
     public ResponseEntity<?> createTeam(@RequestBody TeamRequest.TeamInitDTO teamInitDTO){
-
+        /*팀 생성하는 코드 입니다.*/
         Integer userId = userService.getCurrentUserId();
 
         TeamResponse.TeamInfoDTO teamInfoDTO = teamService.initTeam(userId, teamInitDTO.getTeamName(), teamInitDTO.getBookId());
