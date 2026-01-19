@@ -16,6 +16,7 @@ public interface TeamUserRepository extends JpaRepository<TeamUser, Integer> {
                 WHERE tu.team.id = :teamId
             """)
     List<Integer> findUserIdsByTeamId(Integer teamId);
+    
     List<TeamUser> findAllByTeamId(Integer teamId);
 
     List<TeamUser> findAllByUserId(Integer userId);
