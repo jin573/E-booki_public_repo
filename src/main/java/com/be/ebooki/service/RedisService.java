@@ -28,7 +28,7 @@ public class RedisService {
 
     public String getValues(String key) {
         ValueOperations<String, String> values = redisTemplate.opsForValue();
-        return values.get(key);
+        return (values.get(key) == null) ? "false" : values.get(key);
     }
 
     public static Duration expireTime() {
@@ -41,6 +41,22 @@ public class RedisService {
         return Boolean.TRUE.equals(
                 redisTemplate.opsForValue().setIfAbsent(key, value, duration)
         );
+    }
+
+    //token으로 teamId = key 찾기
+    public Integer findByTeamByToken(String token){
+        ScanOptions scanOptions = ScanOptions.scanOptions().match("invite:team:*").count(10).build(); //초대 링크에 사용된 key만 조회
+        Cursor<byte[]> keys = redisTemplate.getConnectionFactory().getConnection().scan(scanOptions);
+
+        while (keys.hasNext()){
+            String key = new String(keys.next());
+            String value = getValues(key);
+            if(value != null && value.equals(token)){
+                return Integer.valueOf(
+                        key.replace("invite:team:", ""));
+            }
+        }
+        return null;
     }
 
     public void delete(String lockedKey) {
