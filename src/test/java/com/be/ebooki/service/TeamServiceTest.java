@@ -1,19 +1,16 @@
 package com.be.ebooki.service;
 
-import com.be.ebooki.domain.Book;
-import com.be.ebooki.domain.Team;
-import com.be.ebooki.domain.TeamUser;
-import com.be.ebooki.domain.User;
+import com.be.ebooki.domain.*;
 import com.be.ebooki.enums.UserType;
-import com.be.ebooki.repository.BookRepository;
-import com.be.ebooki.repository.TeamRepository;
-import com.be.ebooki.repository.TeamUserRepository;
-import com.be.ebooki.repository.UserRepository;
+import com.be.ebooki.repository.*;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -22,6 +19,7 @@ import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ActiveProfiles("test")
 @SpringBootTest
 //@Transactional
 public class TeamServiceTest {
@@ -43,17 +41,29 @@ public class TeamServiceTest {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
-    @BeforeEach
-    void clearRedis() {
-        redisTemplate.getConnectionFactory().getConnection().flushAll();
-    }
+    @Autowired
+    private UserPlanRepository userPlanRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @BeforeEach
-    void clearDatabase() {
+    void clearAll() {
+        redisTemplate.getConnectionFactory().getConnection().flushAll();
         teamUserRepository.deleteAll();
         teamRepository.deleteAll();
+        userPlanRepository.deleteAll();
         userRepository.deleteAll();
         bookRepository.deleteAll();
+    }
+
+    void createActivePlan(User user, int totalCount){
+        userPlanRepository.save(
+                UserPlan.builder()
+                        .user(user)
+                        .totalBookCount(totalCount)
+                        .build()
+        );
     }
 
     //팀, 조인 테이블, 초대 링크 성공
@@ -61,17 +71,10 @@ public class TeamServiceTest {
     void testInitTeam_Success(){
         //fake user 생성
         User user = createFakeUser("test@example.com");
+        createActivePlan(user, 10);
 
         //fake book 생성
-        Book b = new Book();
-        b.setTitle("fake book");
-        b.setAuthor("fake author");
-        b.setPublisher("fake publisher");
-        b.setPrice(10000);
-        b.setBookImage("fake url");
-        b.setRating(4.8);
-
-        bookRepository.save(b);
+        Book b = createFakeBook();
 
         var result = teamService.initTeam(user.getId(), "TestTeam", b.getId());
         Team savedTeam = teamRepository.findById(result.getTeamData().getId())
@@ -123,16 +126,10 @@ public class TeamServiceTest {
     void testLockedTeam_Success() throws InterruptedException{
         //유저 생성
         User user = createFakeUser("test@example.com");
+        createActivePlan(user, 10);
         //fake book 생성
-        Book b = new Book();
-        b.setTitle("fake book");
-        b.setAuthor("fake author");
-        b.setPublisher("fake publisher");
-        b.setPrice(10000);
-        b.setBookImage("fake url");
-        b.setRating(4.8);
+        Book b = createFakeBook();
 
-        bookRepository.save(b);
         var result = teamService.initTeam(user.getId(), "TestTeam", b.getId());
 
         assertThrows(IllegalStateException.class, ()->
@@ -150,16 +147,10 @@ public class TeamServiceTest {
         //유저 생성
         User user_1 = createFakeUser("test@example.com");
         User user_2 = createFakeUser("testtest@example.com");
+        createActivePlan(user_1, 10);
+        createActivePlan(user_2, 10);
         //fake book 생성
-        Book b = new Book();
-        b.setTitle("fake book");
-        b.setAuthor("fake author");
-        b.setPublisher("fake publisher");
-        b.setPrice(10000);
-        b.setBookImage("fake url");
-        b.setRating(4.8);
-
-        bookRepository.save(b);
+        Book b = createFakeBook();
 
         var result_1 = teamService.initTeam(user_1.getId(), "TestTeam", b.getId());
         var result_2 = teamService.initTeam(user_2.getId(), "TestTeam", b.getId());
@@ -177,16 +168,15 @@ public class TeamServiceTest {
         User user_4 = createFakeUser("test4@example.com");
         User user_5 = createFakeUser("test5@example.com");
 
-        //fake book 생성
-        Book b = new Book();
-        b.setTitle("fake book");
-        b.setAuthor("fake author");
-        b.setPublisher("fake publisher");
-        b.setPrice(10000);
-        b.setBookImage("fake url");
-        b.setRating(4.8);
+        //요금제 추가
+        createActivePlan(user_1, 10);
+        createActivePlan(user_2, 10);
+        createActivePlan(user_3, 10);
+        createActivePlan(user_4, 10);
+        createActivePlan(user_5, 10);
 
-        bookRepository.save(b);
+        //fake book 생성
+        Book b = createFakeBook();
 
         //유저 1은 팀 생성자
         var result = teamService.initTeam(user_1.getId(), "TestTeam", b.getId());
@@ -235,15 +225,9 @@ public class TeamServiceTest {
     void testJoinTeam_UserNotFound(){
         //유저, 책, 팀 생성
         User user = createFakeUser("test@example.com");
+        createActivePlan(user, 10);
 
-        Book b = new Book();
-        b.setTitle("fake book");
-        b.setAuthor("fake author");
-        b.setPublisher("fake publisher");
-        b.setPrice(10000);
-        b.setBookImage("fake url");
-        b.setRating(4.8);
-        bookRepository.save(b);
+        Book b = createFakeBook();
 
         var result = teamService.initTeam(user.getId(), "TestTeam", b.getId());
         Team savedTeam = teamRepository.findById(result.getTeamData().getId())
@@ -263,21 +247,33 @@ public class TeamServiceTest {
 
     }
     //요금제 없을 시 거절
+    @Test
+    void testJoinTeam_NoActivePlan() {
+        User user_1 = createFakeUser("test1@example.com");
+        User user_2 = createFakeUser("test2@example.com");
 
+        createActivePlan(user_1, 10); // 팀 생성자만 있음
+
+        Book b = createFakeBook();
+
+        var result = teamService.initTeam(user_1.getId(), "TestTeam", b.getId());
+
+        String token = redisService.getValues("invite:team:" + result.getTeamData().getId());
+
+        Exception exception = assertThrows(IllegalStateException.class, () ->
+                teamService.acceptInvite(user_2.getId(), token)
+        );
+
+        assertTrue(exception.getMessage().contains("사용 가능한 요금제가 없습니다."));
+    }
     //이미 가입한 사용자일 경우 거절
     @Test
     void testJoinTeam_AlreadyJoined(){
         //유저, 책, 팀 생성
         User user = createFakeUser("test@example.com");
+        createActivePlan(user, 10);
 
-        Book b = new Book();
-        b.setTitle("fake book");
-        b.setAuthor("fake author");
-        b.setPublisher("fake publisher");
-        b.setPrice(10000);
-        b.setBookImage("fake url");
-        b.setRating(4.8);
-        bookRepository.save(b);
+        Book b = createFakeBook();
 
         var result = teamService.initTeam(user.getId(), "TestTeam", b.getId());
         Team savedTeam = teamRepository.findById(result.getTeamData().getId())
@@ -301,32 +297,19 @@ public class TeamServiceTest {
     void testJoinTeam_Concurrency() throws InterruptedException, ExecutionException {
         //팀 생성 유저
         User createUser = createFakeUser("test@example.com");
+        createActivePlan(createUser, 10);
 
-        Book b = new Book();
-        b.setTitle("fake book");
-        b.setAuthor("fake author");
-        b.setPublisher("fake publisher");
-        b.setPrice(10000);
-        b.setBookImage("fake url");
-        b.setRating(4.8);
-        bookRepository.save(b);
-
+        Book b = createFakeBook();
         var result = teamService.initTeam(createUser.getId(), "TestTeam", b.getId());
-        Team savedTeam = teamRepository.findById(result.getTeamData().getId())
-                .orElseThrow();
-
-        teamRepository.flush();
-
-        String redisKey = "invite:team:" + savedTeam.getId();
-        String token = redisService.getValues(redisKey);
+        String token = redisService.getValues("invite:team:" + result.getTeamData().getId());
 
         //fakeUser 생성
-        User user_2 = createFakeUser("test2@example.com");
-        User user_3 = createFakeUser("test3@example.com");
-        User user_4 = createFakeUser("test4@example.com");
-        User user_5 = createFakeUser("test5@example.com");
-
-        List<User> userList = List.of(user_2, user_3, user_4, user_5);
+        List<User> userList = new ArrayList<>();
+        for (int i = 2; i <= 5; i++) {
+            User user = createFakeUser("test" + i + "@example.com");
+            createActivePlan(user, 10);
+            userList.add(user);
+        }
 
         //스레드 생성
         ExecutorService executorService = Executors.newFixedThreadPool(userList.size());
@@ -335,36 +318,62 @@ public class TeamServiceTest {
 
         for (User u : userList) {
             futures.add(executorService.submit(() -> {
-                try {
-                    teamService.acceptInvite(u.getId(), token);
-                    return u.getEmail() + " 가입 성공했습니다.";
-                } catch (Exception e) {
-                    return u.getEmail() + " 가입 실패: " + e.getMessage();
+                int retries = 3;
+                while(retries-- > 0){
+                    try {
+                        teamService.acceptInvite(u.getId(), token);
+                        return u.getEmail() + " 가입 성공했습니다.";
+                    } catch (Exception e) {
+                        if (e.getMessage().contains("동시 가입 요청")) {
+                            Thread.sleep(50); // 짧게 대기 후 재시도
+                        } else {
+                            return u.getEmail() + " 가입 실패: " + e.getMessage();
+                        }
+                    }
                 }
+                return u.getEmail() + "가입 실패: 락 획득 실패";
             }));
         }
 
         executorService.shutdown();
-        executorService.awaitTermination(5, TimeUnit.SECONDS);
+        executorService.awaitTermination(10, TimeUnit.SECONDS);
 
         // 결과 출력
+        int successCount = 0;
         for (Future<String> f : futures) {
-            System.out.println(f.get());
+            String str = f.get();
+            System.out.println(str);
+            if(str.contains("성공")) successCount++;
+
         }
 
-        //잠깐 대기 후 재 접속
-        for (User u : userList) {
-            try {
-                teamService.acceptInvite(u.getId(), token);
-                System.out.println( u.getEmail() + " 가입 성공했습니다.");
-            } catch (Exception e) {
-                System.out.println(u.getEmail() + " 가입 실패: " + e.getMessage());
-            }
-        }
-        // 최종 팀원 수 확인 (팀원 최대 4명)
-        long count = teamUserRepository.countByTeamId(savedTeam.getId());
-        System.out.println("최종 팀원 수: " + count);
-        assertTrue(count <= 4, "팀원 최대 4명 제한 확인");
+        assertEquals(3, successCount, "3명만 가입 성공해야 함");
+        long finalCount = teamUserRepository.countByTeamId(result.getTeamData().getId());
+        assertEquals(4, finalCount, "최종 팀원 수는 4명");
+    }
+
+    //요금제 차감
+    @Test
+    @Transactional
+    void testPlanConsumedAfterJoin() {
+        User user_1 = createFakeUser("test1@example.com");
+        User user_2 = createFakeUser("test2@example.com");
+
+        createActivePlan(user_1, 10);
+        createActivePlan(user_2, 1);
+
+        Book b = createFakeBook();
+
+        var result = teamService.initTeam(user_1.getId(), "TestTeam", b.getId());
+        String token = redisService.getValues("invite:team:" + result.getTeamData().getId());
+
+        teamService.acceptInvite(user_2.getId(), token);
+
+        UserPlan plan = userPlanRepository
+                .findByUserAndStatus(user_2, UserPlanStatus.EXPIRED)
+                .orElseThrow();
+
+        assertEquals(1, plan.getUsedBookCount());
     }
 
     User createFakeUser(String email){
@@ -375,5 +384,17 @@ public class TeamServiceTest {
                         .userType(UserType.LOCAL)
                         .build()
         );
+    }
+
+    Book createFakeBook(){
+        Book b = new Book();
+        b.setTitle("fake book");
+        b.setAuthor("fake author");
+        b.setPublisher("fake publisher");
+        b.setPrice(10000);
+        b.setBookImage("fake url");
+        b.setRating(4.8);
+        bookRepository.save(b);
+        return b;
     }
 }
