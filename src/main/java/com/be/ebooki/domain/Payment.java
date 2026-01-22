@@ -2,6 +2,7 @@ package com.be.ebooki.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import com.be.ebooki.domain.*;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -23,9 +24,16 @@ public class Payment {
     private String paymentMethod;  // KAKAO_PAY
 
     @Enumerated(EnumType.STRING)
-    private PaymentStatus status;  // READY, APPROVED, CANCELLED
+    private com.be.ebooki.domain.PaymentStatus status;  // READY, APPROVED, CANCELLED
 
     private LocalDateTime approvedAt;
+
+    public void approve(int paidAmount, String tid, LocalDateTime approvedAt) {
+        this.paidAmount = paidAmount;
+        this.pgTid = tid;
+        this.status = com.be.ebooki.domain.PaymentStatus.APPROVED;
+        this.approvedAt = approvedAt;
+    }
 
     @Builder
     private Payment(
@@ -34,7 +42,7 @@ public class Payment {
             int paidAmount,
             String pgTid,
             String paymentMethod,
-            PaymentStatus status,
+            com.be.ebooki.domain.PaymentStatus status,
             LocalDateTime approvedAt
     ) {
         this.user = user;

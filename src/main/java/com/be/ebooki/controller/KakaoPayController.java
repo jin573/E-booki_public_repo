@@ -18,17 +18,19 @@ public class KakaoPayController {
 
     private final KakaoPayService kakaoPayService;
 
-    @PostMapping("/ready")
-    public KakaoReadyResponse readyToKakaoPay(@RequestParam Long planId) {
-        return kakaoPayService.kakaoPayReady(planId);
+    @PostMapping("/ready/{planId}")
+    public ResponseEntity<KakaoReadyResponse> ready(@PathVariable Long planId) {
+        KakaoReadyResponse response = kakaoPayService.kakaoPayReady(planId);
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/success")
-    public ResponseEntity<KakaoApproveResponse> afterPayRequest(
-            @RequestParam("pg_token") String pgToken) {
-
-        KakaoApproveResponse kakaoApprove = kakaoPayService.approveResponse(pgToken);
-        return new ResponseEntity<>(kakaoApprove, HttpStatus.OK);
+    @GetMapping("/success")
+    public ResponseEntity<String> approve(
+            @RequestParam("pg_token") String pgToken,
+            @RequestParam("tid") String tid
+    ) {
+        kakaoPayService.approveResponse(pgToken, tid);
+        return ResponseEntity.ok("결제가 완료되었습니다.");
     }
 
     @GetMapping("/cancel")
