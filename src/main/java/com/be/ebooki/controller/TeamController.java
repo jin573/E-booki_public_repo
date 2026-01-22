@@ -1,13 +1,16 @@
 package com.be.ebooki.controller;
 
 
+import com.be.ebooki.domain.User;
 import com.be.ebooki.dto.TeamRequest;
 import com.be.ebooki.dto.BookResponse;
 
 import com.be.ebooki.dto.TeamResponse;
+import com.be.ebooki.repository.UserRepository;
 import com.be.ebooki.service.BookService;
 import com.be.ebooki.service.TeamService;
 import com.be.ebooki.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +32,9 @@ public class TeamController {
 
 
     @PostMapping
+    @Operation(
+            summary = "팀 생성"
+    )
     public ResponseEntity<?> createTeam(@RequestBody TeamRequest.TeamInitDTO teamInitDTO){
         Integer userId = userService.getCurrentUserId();
 
@@ -44,6 +50,9 @@ public class TeamController {
     }
 
     @PostMapping("/invite")
+    @Operation(
+            summary = "초대 링크 접속"
+    )
     public ResponseEntity<?> inviteUser(@RequestParam String token){
         //누구나 접속 가능
         //수락 버튼 눌렀을 경우 요금제 검사, user 유효성 검사 진행
@@ -62,10 +71,12 @@ public class TeamController {
     }
 
     @PostMapping("/invite/join")
+    @Operation(
+            summary = "초대 링크 수락"
+    )
     public ResponseEntity<?> joinUser(@RequestParam String token){
         //user 검사
         Integer userId = userService.getCurrentUserId();
-        //요금제 검사
         //팀 검사
         TeamResponse.TeamInfoDTO teamInfoDTO = teamService.acceptInvite(userId, token); //팀에 올바르게 추가 된 경우
         BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId(), userId); //도서를 가져와서 추가하기

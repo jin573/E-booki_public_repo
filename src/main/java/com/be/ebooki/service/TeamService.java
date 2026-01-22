@@ -32,6 +32,7 @@ public class TeamService {
     private final UserBookProgressRepository userBookProgressRepository;
     private final RedisService redisService;
 
+
     private static final String INVITE_LOCKED_PREFIX = "lock:team:create:%s:%s:%d"; //초대링크 생성시 사용
     private static final String JOIN_LOCKED_PREFIX = "lock:team:join:%d";//초대링크 접속시 사용
 
@@ -40,7 +41,6 @@ public class TeamService {
         //클라이언트가 더블 클릭 시 중복 팀 생성 가능성 -> 멱등키 관리
         String lockedKey = INVITE_LOCKED_PREFIX.formatted(userId, teamName, bookId);
         boolean isLocked = redisService.setIfAbsent(lockedKey, "1", Duration.ofSeconds(1));
-
         if(!isLocked){
             throw new IllegalStateException("초대 링크 생성 중복 요청입니다.");
         }
@@ -49,51 +49,44 @@ public class TeamService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
 
-        if (teamName == null || teamName.isBlank()) {
-            throw new IllegalArgumentException("팀 이름은 필수입니다");
-        }
-
-        //팀 생성 및 유저 추가 (init 이므로 해당 api를 호출한 유저 추가)
-        TeamResponse.TeamDTO teamDTO = createTeam(teamName, bookId); //팀 생성
-        TeamResponse.TeamUserDTO teamUserDTO = joinTeamAndUser(userId, teamDTO); //팀 생성 후 유저 추가
-        List<TeamResponse.TeamUserDTO> teamUsersDTO = teamUserRepository.findAllByTeamId(teamDTO.getId())
-                .stream()
-                .map(TeamResponse.TeamUserDTO::from)
-                .toList();
-
-        //그 후 링크 생성 일괄 처리 -> 트랜잭션 필요
-        String inviteUrl = inviteTeam(userId, teamDTO);
+        userPlanService.validateActivePlan(user); //요금제 조회
+        Team team = createTeam(teamName, bookId); //팀 생성
+        joinTeamAndUser(user.getId(), team.getId()); //팀 생성 후 유저 추가
+        userPlanService.consumeOneBook(user);// 요금제 차감
+        String inviteUrl = inviteTeam(userId, team.getId()); //초대 링크 생성
 
         return TeamResponse.TeamInfoDTO.builder()
-                .teamData(teamDTO)
-                .teamUserData(teamUsersDTO)
+                .teamData(TeamResponse.TeamDTO.from(team))
+                .teamUserData(
+                        teamUserRepository.findAllByTeamId(team.getId())
+                        .stream()
+                        .map(TeamResponse.TeamUserDTO::from)
+                        .toList()
+                )
                 .inviteUrl(inviteUrl)
                 .build();
     }
 
-    private TeamResponse.TeamDTO createTeam(String teamName, Integer bookId) {
+    private Team createTeam(String teamName, Integer bookId) {
+        if (teamName == null || teamName.isBlank()) {
+            throw new IllegalArgumentException("팀 이름은 필수입니다");
+        }
 
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 책입니다."));
 
-        Team team = teamRepository.save(Team.builder()
+        return teamRepository.save(Team.builder()
                 .teamName(teamName)
                 .book(book)
                 .build());
-
-        return TeamResponse.TeamDTO.from(team);
     }
 
-    public TeamResponse.TeamUserDTO joinTeamAndUser(Integer userId, TeamResponse.TeamDTO teamDTO) {
+    private void joinTeamAndUser(Integer userId, Integer teamId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
 
-        Team team = teamRepository.findById(teamDTO.getId())
+        Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
-
-        if (team.getTeamName() == null || team.getTeamName().isBlank()) {
-            throw new IllegalArgumentException("팀 이름은 필수입니다");
-        }
 
         //팀-유저 저장
         TeamUser teamUser = teamUserRepository.save(
@@ -103,17 +96,15 @@ public class TeamService {
                         .build()
         );
         user.getTeamUsers().add(teamUser); //유저가 속한 팀을 조회하기 위해 추가
-
-        return TeamResponse.TeamUserDTO.from(teamUser);
     }
 
     //copy link 할 때 생성되는 일회성 초대 링크
-    public String inviteTeam(Integer userId, TeamResponse.TeamDTO teamDTO) {
-        //외부에서 접근 가능하므로 유효성 검사 필요
+    private String inviteTeam(Integer userId, Integer teamId) {
+        //외부에서 접근 가능하므로 유효성 검사 필요 (나중에 public으로 변경)
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
 
-        Team team = teamRepository.findById(teamDTO.getId())
+        Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
 
         if (team.getTeamName() == null || team.getTeamName().isBlank()) {
@@ -128,8 +119,8 @@ public class TeamService {
 
         //없는 경우 새로 만들기
         String inviteKey = UUID.randomUUID().toString();
-        redisService.setValues("invite:team:" + team.getId(), String.valueOf(team.getId()), RedisService.expireTime());
-        redisService.setValues("invite:token:" + inviteKey, String.valueOf(team.getId()), RedisService.expireTime());
+        redisService.setValues("invite:team:" + team.getId(), inviteKey, RedisService.expireTime()); //내부에서 사용
+        redisService.setValues("invite:token:" + inviteKey, String.valueOf(team.getId()), RedisService.expireTime()); //랜덤 링크
 
         return baseUrl + "/api/teams/invite?token=" + inviteKey;
     }
@@ -148,55 +139,63 @@ public class TeamService {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
 
-        // team에 속한 user 조회
-        List<TeamResponse.TeamUserDTO> teamUsersDTO = teamUserRepository.findAllByTeamId(team.getId())
-                .stream()
-                .map(TeamResponse.TeamUserDTO::from)
-                .toList();
-
         // DTO 변환 후 반환
         return TeamResponse.TeamInfoDTO.builder()
                 .teamData(TeamResponse.TeamDTO.from(team))
-                .teamUserData(teamUsersDTO)
+                .teamUserData(
+                        teamUserRepository.findAllByTeamId(team.getId())
+                                .stream()
+                                .map(TeamResponse.TeamUserDTO::from)
+                                .toList()
+                )
                 .build();
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public TeamResponse.TeamInfoDTO acceptInvite(Integer userId, String token) {
+        //유효성 검증
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
+
         //팀 정보 검사
         TeamResponse.TeamInfoDTO teamInfoDTO = getTeamInfo(token);
+        Integer teamId = teamInfoDTO.getTeamData().getId();
         //이미 팀에 속해있는지 검사
-        boolean alreadyJoined = teamUserRepository.existsByTeamIdAndUserId(teamInfoDTO.getTeamData().getId(), userId);
-
+        boolean alreadyJoined = teamUserRepository.existsByTeamIdAndUserId(teamId, userId);
         if(alreadyJoined){
             throw new IllegalStateException("이미 팀에 속해 있는 사용자입니다.");
         }
 
         //분산 락
-        String lockedKey = JOIN_LOCKED_PREFIX.formatted(teamInfoDTO.getTeamData().getId());
+        String lockedKey = JOIN_LOCKED_PREFIX.formatted(teamId);
         boolean isLocked = redisService.setIfAbsent(lockedKey, userId.toString(), Duration.ofSeconds(5));
-
         if(!isLocked){
             throw new IllegalStateException("동시 가입 요청이 있습니다. 잠시 후 다시 시도해주세요.");
         }
 
         try{
             //회원 count
-            long memberCount = teamUserRepository.countByTeamId(teamInfoDTO.getTeamData().getId());
+            long memberCount = teamUserRepository.countByTeamId(teamId);
             if(memberCount >= 4){
+                redisService.delete("invite:token:" + token);
+                redisService.delete("invite:team:" + teamId);
                 throw new IllegalStateException("팀원은 4명까지 가능합니다.");
             }
+            //요금제 조회
+            userPlanService.validateActivePlan(user);
             //팀 가입
-            joinTeamAndUser(userId, teamInfoDTO.getTeamData());
-
-            List<TeamResponse.TeamUserDTO> teamUserDTOS = teamUserRepository.findAllByTeamId(teamInfoDTO.getTeamData().getId())
-                    .stream()
-                    .map(TeamResponse.TeamUserDTO::from)
-                    .toList();
+            joinTeamAndUser(userId, teamId);
+            //가입 성공시 요금제 차감
+            userPlanService.consumeOneBook(user);
 
             return TeamResponse.TeamInfoDTO.builder()
                     .teamData(teamInfoDTO.getTeamData())
-                    .teamUserData(teamUserDTOS)
+                    .teamUserData(
+                            teamUserRepository.findAllByTeamId(teamId)
+                            .stream()
+                            .map(TeamResponse.TeamUserDTO::from)
+                            .toList()
+                    )
                     .inviteUrl(teamInfoDTO.getInviteUrl())
                     .build();
 
