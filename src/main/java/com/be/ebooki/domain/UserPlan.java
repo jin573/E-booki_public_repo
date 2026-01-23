@@ -1,4 +1,5 @@
 package com.be.ebooki.domain;
+import com.be.ebooki.enums.UserPlanStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;

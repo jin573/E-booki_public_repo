@@ -1,9 +1,10 @@
 package com.be.ebooki.service;
 
 import com.be.ebooki.domain.Book;
-import com.be.ebooki.domain.TimelineType;
+
 import com.be.ebooki.dto.BookResponse;
 import com.be.ebooki.dto.ReadingResponse;
+import com.be.ebooki.enums.TimelineType;
 import com.be.ebooki.repository.BookRepository;
 import com.be.ebooki.repository.CommentRepository;
 import com.be.ebooki.repository.HighlightRepository;

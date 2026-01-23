@@ -1,5 +1,6 @@
 package com.be.ebooki.domain;
 
+import com.be.ebooki.enums.UserColor;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,9 +24,14 @@ public class TeamUser {
     @JoinColumn(name = "team_id")
     private Team team;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_color")
+    private UserColor userColor;
+
     @Builder
-    public TeamUser(User user, Team team) {
+    public TeamUser(User user, Team team, UserColor userColor) {
         this.user = user;
         this.team = team;
+        this.userColor = userColor;
     }
 }

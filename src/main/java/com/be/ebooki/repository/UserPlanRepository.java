@@ -2,8 +2,11 @@ package com.be.ebooki.repository;
 
 import com.be.ebooki.domain.User;
 import com.be.ebooki.domain.UserPlan;
-import com.be.ebooki.domain.UserPlanStatus;
+
+import com.be.ebooki.enums.UserPlanStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -15,5 +18,6 @@ public interface UserPlanRepository extends JpaRepository<UserPlan, Long> {
     boolean existsByUserAndStatus(User user, UserPlanStatus status);
 
     // 현재 사용 중 요금제 조회
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<UserPlan> findByUserAndStatus(User user, UserPlanStatus status);
 }
