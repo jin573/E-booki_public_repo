@@ -267,6 +267,7 @@ public class TeamService {
                 .build();
     }
 
+    @Transactional
     public void updateTeamName(Integer teamId, String teamName) {
 
         Team team = teamRepository.findById(teamId)

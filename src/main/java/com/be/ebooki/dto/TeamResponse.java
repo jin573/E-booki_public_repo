@@ -6,6 +6,8 @@ import com.be.ebooki.enums.UserColor;
 import lombok.Builder;
 import lombok.Getter;
 import java.util.List;
+
+import java.util.List;
 @Getter
 public class TeamResponse {
 
