@@ -1,4 +1,4 @@
-package com.be.ebooki.domain;
+package com.be.ebooki.enums;
 
 public enum PaymentStatus {
     READY,       // 결제 준비

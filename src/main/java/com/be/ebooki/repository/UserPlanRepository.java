@@ -2,7 +2,8 @@ package com.be.ebooki.repository;
 
 import com.be.ebooki.domain.User;
 import com.be.ebooki.domain.UserPlan;
-import com.be.ebooki.domain.UserPlanStatus;
+
+import com.be.ebooki.enums.UserPlanStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
