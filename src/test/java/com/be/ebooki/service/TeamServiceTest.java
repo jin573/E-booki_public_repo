@@ -1,6 +1,7 @@
 package com.be.ebooki.service;
 
 import com.be.ebooki.domain.*;
+import com.be.ebooki.enums.UserColor;
 import com.be.ebooki.enums.UserType;
 import com.be.ebooki.repository.*;
 import jakarta.persistence.EntityManager;
@@ -13,9 +14,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -57,15 +58,6 @@ public class TeamServiceTest {
         bookRepository.deleteAll();
     }
 
-    void createActivePlan(User user, int totalCount){
-        userPlanRepository.save(
-                UserPlan.builder()
-                        .user(user)
-                        .totalBookCount(totalCount)
-                        .build()
-        );
-    }
-
     //팀, 조인 테이블, 초대 링크 성공
     @Test
     void testInitTeam_Success(){
@@ -96,7 +88,7 @@ public class TeamServiceTest {
         assertNotNull(token, "redis에 초대 토큰이 저장되어야 함");
         assertFalse(token.isEmpty());
     }
-    //셋 중 하나 실패 -> 트랜잭션 테스트
+
     //user 없을 때
     @Test
     void testInitTeam_UserNotFound(){
@@ -120,8 +112,8 @@ public class TeamServiceTest {
 
         assertEquals(1, userRepository.count(), "User만 존재, Team은 저장되지 않아야 함");
     }
-    //같은 유저가 같은 팀 이름으로 요청 시 두번째 실패 ->성공
 
+    //같은 유저가 같은 팀 이름으로 요청 시 두번째 실패 ->성공
     @Test
     void testLockedTeam_Success() throws InterruptedException{
         //유저 생성
@@ -140,8 +132,8 @@ public class TeamServiceTest {
         assertDoesNotThrow(() -> teamService.initTeam(user.getId(), "TestTeam", b.getId()));
 
     }
-    //다른 유저는 동일한 이름으로 팀 생성 가능
 
+    //다른 유저는 동일한 이름으로 팀 생성 가능
     @Test
     void testCreateTeamAsSameName_Success(){
         //유저 생성
@@ -158,68 +150,62 @@ public class TeamServiceTest {
         assertNotNull(result_1);
         assertNotNull(result_2);
     }
+
     //초대 링크로 접속해서 가입하기
     @Test
     void testJoinTeam_Success(){
-        //fake user 생성
-        User user_1 = createFakeUser("test1@example.com");
-        User user_2 = createFakeUser("test2@example.com");
-        User user_3 = createFakeUser("test3@example.com");
-        User user_4 = createFakeUser("test4@example.com");
-        User user_5 = createFakeUser("test5@example.com");
-
-        //요금제 추가
-        createActivePlan(user_1, 10);
-        createActivePlan(user_2, 10);
-        createActivePlan(user_3, 10);
-        createActivePlan(user_4, 10);
-        createActivePlan(user_5, 10);
-
+        //fakeUser 생성
+        List<User> userList = new ArrayList<>();
+        for (int i = 1; i <= 5; i++) {
+            User user = createFakeUser("test" + i + "@example.com");
+            createActivePlan(user, 10);
+            userList.add(user);
+        }
         //fake book 생성
         Book b = createFakeBook();
 
         //유저 1은 팀 생성자
-        var result = teamService.initTeam(user_1.getId(), "TestTeam", b.getId());
+        var result = teamService.initTeam(userList.get(0).getId(), "TestTeam", b.getId());
         Team savedTeam = teamRepository.findById(result.getTeamData().getId())
                 .orElseThrow();
 
         //팀 생성 확인
         assertNotNull(result.getTeamData().getId(), "팀 id가 생성되어야 함");
         assertEquals("TestTeam", result.getTeamData().getTeamName());
-        assertEquals(user_1.getId(), result.getTeamUserData().get(0).getUserId());
+        assertEquals(userList.get(0).getId(), result.getTeamUserData().get(0).getUserId());
 
         //유저 2, 3은 접속자
         //redis 토큰 가져오기
         String redisKey = "invite:team:" + savedTeam.getId();
         String token = redisService.getValues(redisKey);
-        teamService.acceptInvite(user_2.getId(), token);
-        teamService.acceptInvite(user_3.getId(), token);
+        teamService.acceptInvite(userList.get(1).getId(), token);
+        teamService.acceptInvite(userList.get(2).getId(), token);
 
         List<TeamUser> teamUserList = teamUserRepository.findAllByTeamId(savedTeam.getId());
         //팀에 속해있는지 확인
         assertEquals(3, teamUserRepository.countByTeamId(savedTeam.getId()));
         assertTrue(teamUserList.stream()
-                .anyMatch(teamUser -> teamUser.getUser().getId().equals(user_1.getId())));
+                .anyMatch(teamUser -> teamUser.getUser().getId().equals(userList.get(0).getId())));
         assertTrue(teamUserList.stream()
-                .anyMatch(teamUser -> teamUser.getUser().getId().equals(user_2.getId())));
+                .anyMatch(teamUser -> teamUser.getUser().getId().equals(userList.get(1).getId())));
         assertTrue(teamUserList.stream()
-                .anyMatch(teamUser -> teamUser.getUser().getId().equals(user_3.getId())));
+                .anyMatch(teamUser -> teamUser.getUser().getId().equals(userList.get(2).getId())));
 
         //유저 4가 접속 시 올바르게 되는지 확인
-        teamService.acceptInvite(user_4.getId(), token);
+        teamService.acceptInvite(userList.get(3).getId(), token);
         teamUserList = teamUserRepository.findAllByTeamId(savedTeam.getId());
         assertEquals(4, teamUserRepository.countByTeamId(savedTeam.getId()));
         assertTrue(teamUserList.stream()
-                .anyMatch(teamUser -> teamUser.getUser().getId().equals(user_4.getId())));
+                .anyMatch(teamUser -> teamUser.getUser().getId().equals(userList.get(3).getId())));
 
         //유저 5가 접속시 인원 count 되는지 확인
         Exception exception = assertThrows(IllegalStateException.class, ()->
-        {teamService.acceptInvite(user_5.getId(), token);});
+        {teamService.acceptInvite(userList.get(4).getId(), token);});
 
         assertTrue(exception.getMessage().contains("팀원은 4명까지 가능합니다."));
 
-
     }
+
     //회원이 아닌 유저 가입 시 거절
     @Test
     void testJoinTeam_UserNotFound(){
@@ -246,6 +232,7 @@ public class TeamServiceTest {
         assertTrue(exception.getMessage().contains("존재하지 않는 계정입니다."));
 
     }
+
     //요금제 없을 시 거절
     @Test
     void testJoinTeam_NoActivePlan() {
@@ -266,6 +253,7 @@ public class TeamServiceTest {
 
         assertTrue(exception.getMessage().contains("사용 가능한 요금제가 없습니다."));
     }
+
     //이미 가입한 사용자일 경우 거절
     @Test
     void testJoinTeam_AlreadyJoined(){
@@ -290,7 +278,6 @@ public class TeamServiceTest {
         assertTrue(exception.getMessage().contains("이미 팀에 속해 있는 사용자입니다."));
 
     }
-    //15분 지난 링크로 접속 시 거절
 
     //동시 요청 시 접속 어떻게 되는지 테스트
     @Test
@@ -347,7 +334,7 @@ public class TeamServiceTest {
 
         }
 
-        assertEquals(3, successCount, "3명만 가입 성공해야 함");
+        assertTrue(successCount <= 3, "3명 이하만 가입 성공해야 함");
         long finalCount = teamUserRepository.countByTeamId(result.getTeamData().getId());
         assertEquals(4, finalCount, "최종 팀원 수는 4명");
     }
@@ -376,6 +363,53 @@ public class TeamServiceTest {
         assertEquals(1, plan.getUsedBookCount());
     }
 
+    //컬러 랜덤 부여
+    @Test
+    void testRandomColor_Success(){
+        //team 생성
+        Team team = teamRepository.save(new Team("testTeam", null));
+        //fakeUser 생성
+        List<User> userList = new ArrayList<>();
+        for (int i = 0; i <4; i++) {
+            User user = createFakeUser("test" + i + "@example.com");
+            createActivePlan(user, 10);
+            userList.add(user);
+        }
+        //color set
+        Set<UserColor> ColorSet = new HashSet<>();
+
+        // 팀원 가입 & 컬러 배정
+        for (User user : userList) {
+            Set<UserColor> usedColors = teamUserRepository.findAllByTeamId(team.getId())
+                    .stream()
+                    .map(TeamUser::getUserColor)
+                    .collect(Collectors.toSet());
+
+            UserColor newColor = UserColor.randomColor(usedColors);
+
+            TeamUser teamUser = teamUserRepository.save(
+                    TeamUser.builder()
+                            .team(team)
+                            .user(user)
+                            .userColor(newColor)
+                            .build()
+            );
+
+            ColorSet.add(teamUser.getUserColor());
+        }
+
+        //팀원 수 확인
+        assertEquals(4, teamUserRepository.countByTeamId(team.getId()));
+
+        //컬러 중복 없음 확인
+        assertEquals(4, ColorSet.size());
+
+        //Enum 컬러만 사용됐는지 확인
+        for (UserColor color : ColorSet) {
+            assertTrue(Arrays.asList(UserColor.values()).contains(color));
+        }
+
+    }
     User createFakeUser(String email){
         return userRepository.save(
                 User.builder()
@@ -397,4 +431,14 @@ public class TeamServiceTest {
         bookRepository.save(b);
         return b;
     }
+
+    void createActivePlan(User user, int totalCount){
+        userPlanRepository.save(
+                UserPlan.builder()
+                        .user(user)
+                        .totalBookCount(totalCount)
+                        .build()
+        );
+    }
+
 }

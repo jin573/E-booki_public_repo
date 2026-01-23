@@ -6,6 +6,7 @@ import com.be.ebooki.domain.User;
 import com.be.ebooki.domain.Book;
 import com.be.ebooki.domain.UserBookProgress;
 import com.be.ebooki.dto.TeamResponse;
+import com.be.ebooki.enums.UserColor;
 import com.be.ebooki.repository.*;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +17,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.time.Duration;
 
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -88,11 +91,19 @@ public class TeamService {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
 
+        //유저 컬러 랜덤 생성
+        Set<UserColor> userColorSet = teamUserRepository.findAllByTeamId(teamId)
+                .stream()
+                .map(TeamUser::getUserColor)
+                .collect(Collectors.toSet());
+        UserColor newColor = UserColor.randomColor(userColorSet);
+
         //팀-유저 저장
         TeamUser teamUser = teamUserRepository.save(
                 TeamUser.builder()
                         .user(user)
                         .team(team)
+                        .userColor(newColor)
                         .build()
         );
         user.getTeamUsers().add(teamUser); //유저가 속한 팀을 조회하기 위해 추가
