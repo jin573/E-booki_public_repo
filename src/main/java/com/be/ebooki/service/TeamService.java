@@ -136,11 +136,42 @@ public class TeamService {
         return baseUrl + "/api/teams/invite?token=" + inviteKey;
     }
 
+    @Transactional
+    public String reissueInvite(Integer userId, Integer teamId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
+
+        boolean isMember = teamUserRepository.existsByTeamIdAndUserId(teamId, userId);
+        if (!isMember) {
+            throw new IllegalStateException("팀원만 초대 링크를 재생성할 수 있습니다.");
+        }
+
+        if (team.getBook() == null) {
+            throw new IllegalStateException("팀에 연결된 도서 정보가 없습니다.");
+        }
+
+
+        String oldToken = redisService.getValues("invite:team:" + teamId);
+        if (oldToken != null) {
+            redisService.delete("invite:token:" + oldToken);
+            redisService.delete("invite:team:" + teamId);
+        }
+
+        String newToken = UUID.randomUUID().toString();
+        redisService.setValues("invite:team:" + teamId, newToken, RedisService.expireTime());
+        redisService.setValues("invite:token:" + newToken, String.valueOf(teamId), RedisService.expireTime());
+
+        return baseUrl + "/api/teams/invite?token=" + newToken;
+    }
+
     public TeamResponse.TeamInfoDTO getTeamInfo(String token) {
         String inviteToken = redisService.getValues("invite:token:"+token);
 
         // 존재하지 않거나 만료된 링크면 예외 처리
-        if (inviteToken == null || inviteToken.equals("false")) {
+        if (inviteToken == null) {
             throw new IllegalArgumentException("유효하지 않거나 만료된 초대 링크입니다.");
         }
 

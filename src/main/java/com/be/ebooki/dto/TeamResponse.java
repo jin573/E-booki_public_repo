@@ -90,7 +90,12 @@ public class TeamResponse {
     }
 
 
-
+    @Getter
+    @Builder
+    public static class ReissueTeamUrlResponse{
+        private Integer teamId;
+        private String newUrl;
+    }
 
 
 
