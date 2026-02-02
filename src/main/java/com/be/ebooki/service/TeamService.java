@@ -56,6 +56,7 @@ public class TeamService {
         //팀 생성 및 유저 추가 (init 이므로 해당 api를 호출한 유저 추가)
         TeamResponse.TeamDTO teamDTO = createTeam(teamName, bookId); //팀 생성
         TeamResponse.TeamUserDTO teamUserDTO = joinTeamAndUser(userId, teamDTO); //팀 생성 후 유저 추가
+        userPlanService.consumeOneBook(user); //요금제 차감
         List<TeamResponse.TeamUserDTO> teamUsersDTO = teamUserRepository.findAllByTeamId(teamDTO.getId())
                 .stream()
                 .map(TeamResponse.TeamUserDTO::from)
@@ -188,6 +189,10 @@ public class TeamService {
             }
             //팀 가입
             joinTeamAndUser(userId, teamInfoDTO.getTeamData());
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
+            //독서 횟수 차감
+            userPlanService.consumeOneBook(user);
 
             List<TeamResponse.TeamUserDTO> teamUserDTOS = teamUserRepository.findAllByTeamId(teamInfoDTO.getTeamData().getId())
                     .stream()
