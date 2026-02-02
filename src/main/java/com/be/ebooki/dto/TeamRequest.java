@@ -18,6 +18,15 @@ public class TeamRequest {
 
     @Getter
     @NoArgsConstructor
+    public static class TeamDTO{
+        private Integer id;
+        private String teamName;
+
+        private Integer bookId;
+    }
+
+    @Getter
+    @NoArgsConstructor
     public static class UpdateTeamName {
         private String teamName;
     }

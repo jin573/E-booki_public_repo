@@ -2,6 +2,7 @@ package com.be.ebooki.dto;
 
 import com.be.ebooki.domain.Team;
 import com.be.ebooki.domain.TeamUser;
+import com.be.ebooki.enums.UserColor;
 import lombok.Builder;
 import lombok.Getter;
 import java.util.List;
@@ -52,11 +53,13 @@ public class TeamResponse {
         private Integer id;
         private Integer userId;
         private Integer teamId;
+        private UserColor userColor;
         public static TeamUserDTO from(TeamUser teamUser) {
             return TeamUserDTO.builder()
                     .id(teamUser.getId())
                     .userId(teamUser.getUser().getId())
                     .teamId(teamUser.getTeam().getId())
+                    .userColor(teamUser.getUserColor())
                     .build();
         }
     }
@@ -87,7 +90,12 @@ public class TeamResponse {
     }
 
 
-
+    @Getter
+    @Builder
+    public static class ReissueTeamUrlResponse{
+        private Integer teamId;
+        private String newUrl;
+    }
 
 
 

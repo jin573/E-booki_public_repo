@@ -5,6 +5,9 @@ import com.be.ebooki.enums.PaymentStatus;
 import com.be.ebooki.enums.UserPlanStatus;
 import com.be.ebooki.dto.KakaoApproveResponse;
 import com.be.ebooki.dto.KakaoReadyResponse;
+
+import com.be.ebooki.enums.PaymentStatus;
+import com.be.ebooki.enums.UserPlanStatus;
 import com.be.ebooki.pay.KakaoPayProperties;
 import com.be.ebooki.repository.PaymentRepository;
 import com.be.ebooki.repository.PlanRepository;

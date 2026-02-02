@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Profile("local")
+@Profile("dev")
 @Component
 @RequiredArgsConstructor
 @Slf4j
