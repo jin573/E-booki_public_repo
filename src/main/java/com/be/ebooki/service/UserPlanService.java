@@ -34,6 +34,5 @@ public class UserPlanService {
         if (next >= userPlan.getTotalBookCount()) {
             userPlan.expire();
         }
-
     }
 }

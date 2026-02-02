@@ -51,13 +51,11 @@ public class TeamService {
         //유효성 검증
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
-
         userPlanService.validateActivePlan(user); //요금제 조회
         Team team = createTeam(teamName, bookId); //팀 생성
         joinTeamAndUser(user.getId(), team.getId()); //팀 생성 후 유저 추가
         userPlanService.consumeOneBook(user);// 요금제 차감
         String inviteUrl = inviteTeam(userId, team.getId()); //초대 링크 생성
-
         return TeamResponse.TeamInfoDTO.builder()
                 .teamData(TeamResponse.TeamDTO.from(team))
                 .teamUserData(
@@ -226,9 +224,17 @@ public class TeamService {
             //요금제 조회
             userPlanService.validateActivePlan(user);
             //팀 가입
-            joinTeamAndUser(userId, teamId);
-            //가입 성공시 요금제 차감
+
+            joinTeamAndUser(userId, teamInfoDTO.getTeamData());
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
+            //독서 횟수 차감
             userPlanService.consumeOneBook(user);
+
+            List<TeamResponse.TeamUserDTO> teamUserDTOS = teamUserRepository.findAllByTeamId(teamInfoDTO.getTeamData().getId())
+                    .stream()
+                    .map(TeamResponse.TeamUserDTO::from)
+                    .toList();
 
             return TeamResponse.TeamInfoDTO.builder()
                     .teamData(teamInfoDTO.getTeamData())

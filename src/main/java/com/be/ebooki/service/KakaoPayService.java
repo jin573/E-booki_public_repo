@@ -1,8 +1,8 @@
 package com.be.ebooki.service;
 
 import com.be.ebooki.domain.*;
-import com.be.ebooki.domain.PaymentStatus;
-import com.be.ebooki.domain.UserPlanStatus;
+import com.be.ebooki.enums.PaymentStatus;
+import com.be.ebooki.enums.UserPlanStatus;
 import com.be.ebooki.dto.KakaoApproveResponse;
 import com.be.ebooki.dto.KakaoReadyResponse;
 
@@ -24,8 +24,6 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-
 
 @Service
 @RequiredArgsConstructor
@@ -41,15 +39,12 @@ public class KakaoPayService {
     private final PaymentRepository paymentRepository;
     private final UserPlanRepository userPlanRepository;
 
-
-
-
     private HttpHeaders getHeaders() {
         HttpHeaders headers = new HttpHeaders();
         String auth = "SECRET_KEY " + payProperties.getSecretKey();
         headers.set("Authorization", auth);
         headers.set("Content-Type", "application/json");
-        log.info("🔐 Authorization Header = {}", auth);  // 👈 반드시 INFO 이상 레벨
+        log.info("Authorization Header = {}", auth);
         return headers;
     }
 
