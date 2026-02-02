@@ -1,4 +1,4 @@
-package com.be.ebooki.domain;
+package com.be.ebooki.enums;
 
 public enum UserPlanStatus {
     ACTIVE,     // 사용 중 (남은 권수 있음)

@@ -1,10 +1,8 @@
 package com.be.ebooki.service;
 import com.be.ebooki.domain.Book;
-import com.be.ebooki.domain.Team;
 import com.be.ebooki.domain.User;
 import com.be.ebooki.domain.UserBookProgress;
 import com.be.ebooki.repository.BookRepository;
-import com.be.ebooki.repository.TeamUserRepository;
 import com.be.ebooki.repository.UserBookProgressRepository;
 import com.be.ebooki.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

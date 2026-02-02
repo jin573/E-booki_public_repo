@@ -1,6 +1,5 @@
 package com.be.ebooki.controller;
 
-import com.be.ebooki.dto.KakaoApproveResponse;
 import com.be.ebooki.dto.KakaoReadyResponse;
 import com.be.ebooki.service.KakaoPayService;
 import lombok.RequiredArgsConstructor;

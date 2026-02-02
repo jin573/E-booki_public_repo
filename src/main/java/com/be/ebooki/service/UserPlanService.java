@@ -1,7 +1,7 @@
 package com.be.ebooki.service;
 import com.be.ebooki.domain.User;
 import com.be.ebooki.domain.UserPlan;
-import com.be.ebooki.domain.UserPlanStatus;
+import com.be.ebooki.enums.UserPlanStatus;
 import com.be.ebooki.repository.UserPlanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,8 +26,5 @@ public class UserPlanService {
         if (next >= userPlan.getTotalBookCount()) {
             userPlan.expire();
         }
-
-
-
     }
 }

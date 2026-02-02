@@ -1,4 +1,5 @@
 package com.be.ebooki.domain;
+import com.be.ebooki.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -24,14 +25,14 @@ public class Payment {
     private String paymentMethod;  // KAKAO_PAY
 
     @Enumerated(EnumType.STRING)
-    private com.be.ebooki.domain.PaymentStatus status;  // READY, APPROVED, CANCELLED
+    private PaymentStatus status;  // READY, APPROVED, CANCELLED
 
     private LocalDateTime approvedAt;
 
     public void approve(int paidAmount, String tid, LocalDateTime approvedAt) {
         this.paidAmount = paidAmount;
         this.pgTid = tid;
-        this.status = com.be.ebooki.domain.PaymentStatus.APPROVED;
+        this.status = PaymentStatus.APPROVED;
         this.approvedAt = approvedAt;
     }
 
@@ -42,7 +43,7 @@ public class Payment {
             int paidAmount,
             String pgTid,
             String paymentMethod,
-            com.be.ebooki.domain.PaymentStatus status,
+            PaymentStatus status,
             LocalDateTime approvedAt
     ) {
         this.user = user;
