@@ -131,7 +131,7 @@ public class TeamController {
         TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO> responseDTO
                 = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO>builder()
                 .statusCode(200)
-                .message("팀 생성 성공 및 링크 생성 성공")
+                .message("팀 상세 정보 가져오기 성공")
                 .teamData(teamInfoDTO)
                 .bookData(bookPreviewDTO)
                 .build();
