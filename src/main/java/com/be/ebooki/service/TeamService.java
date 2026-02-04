@@ -107,9 +107,8 @@ public class TeamService {
         user.getTeamUsers().add(teamUser); //유저가 속한 팀을 조회하기 위해 추가
     }
 
-    //copy link 할 때 생성되는 일회성 초대 링크
+    //팀 생성 시 링크 생성
     private String inviteTeam(Integer userId, Integer teamId) {
-        //외부에서 접근 가능하므로 유효성 검사 필요 (나중에 public으로 변경)
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
 
@@ -120,13 +119,6 @@ public class TeamService {
             throw new IllegalArgumentException("팀 이름은 필수입니다");
         }
 
-        //기존 key 조회
-        String existingKey = redisService.getValues("invite:team:" + team.getId());
-        if(existingKey != null){
-            return baseUrl + "/api/teams/invite?token=" + existingKey;
-        }
-
-        //없는 경우 새로 만들기
         String inviteKey = UUID.randomUUID().toString();
         redisService.setValues("invite:team:" + team.getId(), inviteKey, RedisService.expireTime()); //내부에서 사용
         redisService.setValues("invite:token:" + inviteKey, String.valueOf(team.getId()), RedisService.expireTime()); //랜덤 링크
@@ -134,6 +126,7 @@ public class TeamService {
         return baseUrl + "/api/teams/invite?token=" + inviteKey;
     }
 
+    //링크 재생성
     @Transactional
     public String reissueInvite(Integer userId, Integer teamId) {
         User user = userRepository.findById(userId)
@@ -224,10 +217,7 @@ public class TeamService {
             //요금제 조회
             userPlanService.validateActivePlan(user);
             //팀 가입
-
-            joinTeamAndUser(userId, teamInfoDTO.getTeamData());
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
+            joinTeamAndUser(userId, teamInfoDTO.getTeamData().getId());
             //독서 횟수 차감
             userPlanService.consumeOneBook(user);
 
