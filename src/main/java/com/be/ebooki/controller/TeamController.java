@@ -54,7 +54,7 @@ public class TeamController {
 
         Integer userId = userService.getCurrentUserId();
 
-        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.getTeamInfo(token);
+        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.getTeamInfoByToken(token);
         BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId(),userId);
 
         TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
@@ -119,6 +119,25 @@ public class TeamController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{teamId}")
+    @Operation(
+            summary = "팀 상세 조회"
+    )
+    public ResponseEntity<TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO>> getTeam(@PathVariable Integer teamId) {
+        Integer userId = userService.getCurrentUserId();
+        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.getTeamInfo(teamId, userId);
+        BookResponse.BookPreviewDTO bookPreviewDTO =bookService.getBookPreview(teamInfoDTO.getTeamData().getBookId());
+
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO> responseDTO
+                = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO>builder()
+                .statusCode(200)
+                .message("팀 생성 성공 및 링크 생성 성공")
+                .teamData(teamInfoDTO)
+                .bookData(bookPreviewDTO)
+                .build();
+
+        return ResponseEntity.ok(responseDTO);
+    }
     @PutMapping("/{teamId}")
     public ResponseEntity<Void> updateTeamName(
             @PathVariable Integer teamId,
@@ -130,5 +149,4 @@ public class TeamController {
 
         return ResponseEntity.ok().build();
     }
-
 }

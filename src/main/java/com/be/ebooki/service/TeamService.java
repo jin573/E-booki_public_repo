@@ -5,6 +5,7 @@ import com.be.ebooki.domain.TeamUser;
 import com.be.ebooki.domain.User;
 import com.be.ebooki.domain.Book;
 import com.be.ebooki.domain.UserBookProgress;
+import com.be.ebooki.dto.BookResponse;
 import com.be.ebooki.dto.TeamResponse;
 import com.be.ebooki.enums.UserColor;
 import com.be.ebooki.repository.*;
@@ -158,7 +159,7 @@ public class TeamService {
         return baseUrl + "/api/teams/invite?token=" + newToken;
     }
 
-    public TeamResponse.TeamInfoDTO getTeamInfo(String token) {
+    public TeamResponse.TeamInfoDTO getTeamInfoByToken(String token) {
         String inviteToken = redisService.getValues("invite:token:"+token);
 
         // 존재하지 않거나 만료된 링크면 예외 처리
@@ -191,7 +192,7 @@ public class TeamService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
 
         //팀 정보 검사
-        TeamResponse.TeamInfoDTO teamInfoDTO = getTeamInfo(token);
+        TeamResponse.TeamInfoDTO teamInfoDTO = getTeamInfoByToken(token);
         Integer teamId = teamInfoDTO.getTeamData().getId();
         //이미 팀에 속해있는지 검사
         boolean alreadyJoined = teamUserRepository.existsByTeamIdAndUserId(teamId, userId);
@@ -291,6 +292,26 @@ public class TeamService {
 
         return TeamResponse.TeamListResponse.builder()
                 .teams(teamList)
+                .build();
+    }
+
+    public TeamResponse.TeamInfoDTO getTeamInfo(Integer teamId, Integer userId){
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
+
+        if(!teamUserRepository.existsByTeamIdAndUserId(teamId, userId)){
+            throw new IllegalStateException("팀에 속한 멤버가 아닙니다.");
+        }
+
+        return TeamResponse.TeamInfoDTO.builder()
+                .teamData(TeamResponse.TeamDTO.from(team))
+                .teamUserData(
+                        teamUserRepository.findAllByTeamId(team.getId())
+                                .stream()
+                                .map(TeamResponse.TeamUserDTO::from)
+                                .toList()
+                )
                 .build();
     }
 
