@@ -25,6 +25,4 @@ public class Emoticon {
 
     @Enumerated(EnumType.STRING)
     private EmojiType emoji;
-
-    private LocalDateTime createdAt;
 }

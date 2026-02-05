@@ -3,6 +3,8 @@ package com.be.ebooki.domain;
 import com.be.ebooki.enums.HighlightColor;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class Highlight {
 
     @Id
@@ -36,5 +39,7 @@ public class Highlight {
     @Column(length = 1000)
     private String text;
 
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }

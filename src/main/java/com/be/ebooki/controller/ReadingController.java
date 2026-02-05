@@ -36,9 +36,10 @@ public class ReadingController {
 
     @GetMapping("/{bookId}/highlights")
     public ResponseEntity<ReadingResponse.HighlightListDTO> getHighlights(
-            @PathVariable Integer bookId
+            @PathVariable Integer bookId,
+            @RequestParam Integer teamId
     ) {
-        return ResponseEntity.ok(readingService.getHighlights(bookId));
+        return ResponseEntity.ok(readingService.getHighlights(bookId, teamId));
     }
 
     //특정 하이라이트 클릭 시 댓글 + 이모티콘 개수 조회
