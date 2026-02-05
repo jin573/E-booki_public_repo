@@ -100,6 +100,21 @@ public class ReadingController {
 
         return ResponseEntity.noContent().build();
     }
+    /** 댓글 수정 */
+    @PatchMapping("/teams/{teamId}/comments/{commentId}")
+    public ResponseEntity<ReadingResponse.CommentDTO> updateComment(
+            @PathVariable Integer teamId,
+            @PathVariable Integer commentId,
+            @RequestBody ReadingRequest.UpdateCommentDTO req
+    ) {
+        Integer userId = userService.getCurrentUserId();
+
+        ReadingResponse.CommentDTO updatedComment =
+                readingService.updateComment(commentId,req, userId, teamId);
+
+        return ResponseEntity.ok(updatedComment);
+    }
+
 
     @PostMapping("/emoticons")
     public ResponseEntity<ReadingResponse.EmoticonCountDTO> toggle(

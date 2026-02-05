@@ -227,6 +227,57 @@ public class ReadingService {
         );
         return commentDTO;
     }
+    /** 댓글 수정 */
+    @Transactional
+    public ReadingResponse.CommentDTO updateComment(
+            Integer commentId,
+            ReadingRequest.UpdateCommentDTO req,
+            Integer userId,
+            Integer teamId
+    ) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+
+        Highlight highlight = highlightRepository.findById(comment.getHighlightId())
+                .orElseThrow(() -> new IllegalStateException("잘못된 하이라이트입니다."));
+
+        if (!highlight.getTeamId().equals(teamId)) {
+            throw new IllegalArgumentException("팀이 일치하지 않습니다.");
+        }
+
+        if (!comment.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("댓글 수정 권한이 없습니다.");
+        }
+
+        comment.setText(req.getText());
+
+        Integer bookId = highlight.getBookId();
+
+        ReadingResponse.CommentDTO commentDTO =
+                ReadingResponse.CommentDTO.builder()
+                        .id(comment.getId())
+                        .userId(comment.getUserId())
+                        .highlightId(comment.getHighlightId())
+                        .bookId(bookId)
+                        .text(comment.getText())
+                        .createdAt(comment.getCreatedAt())
+                        .emoticons(buildEmoticonCount(comment.getId()))
+                        .myEmoticon(buildUserEmoticon(comment.getId(), userId))
+                        .build();
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/teams/" + teamId + "/books/" + bookId,
+                new StompResponse<>(
+                        MessageType.COMMENT_UPDATED,
+                        teamId,
+                        bookId,
+                        commentDTO
+                )
+        );
+
+        return commentDTO;
+    }
+
 
     /** 댓글 삭제 */
     @Transactional
