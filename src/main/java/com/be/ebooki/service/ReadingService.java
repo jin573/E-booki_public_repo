@@ -140,6 +140,7 @@ public class ReadingService {
                 .cfi(highlight.getCfi())
                 .text(highlight.getText())
                 .color(highlight.getColor())
+                .createdAt(LocalDateTime.now())
                 .build();
 
         //STOMP 얹기
@@ -149,6 +150,32 @@ public class ReadingService {
 
         return highlightDTO;
     }
+    /** 하이라이트 삭제 */
+    @Transactional
+    public void deleteHighlight(Integer highlightId, Integer userId, Integer teamId) {
+
+        Highlight highlight = highlightRepository.findById(highlightId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 하이라이트입니다."));
+
+        if (!highlight.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("하이라이트 삭제 권한이 없습니다.");
+        }
+
+        Integer bookId = highlight.getBookId();
+
+        highlightRepository.delete(highlight);
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/teams/" + teamId + "/books/" + bookId,
+                new StompResponse<>(
+                        MessageType.HIGHLIGHT_DELETED,
+                        teamId,
+                        bookId,
+                        highlightId
+                )
+        );
+    }
+
 
     /** 댓글 생성 */
     public ReadingResponse.CommentDTO createComment(
@@ -195,6 +222,36 @@ public class ReadingService {
         );
         return commentDTO;
     }
+
+    /** 댓글 삭제 */
+    @Transactional
+    public void deleteComment(Integer commentId, Integer userId, Integer teamId) {
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+
+        if (!comment.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("댓글 삭제 권한이 없습니다.");
+        }
+
+        Highlight highlight = highlightRepository.findById(comment.getHighlightId())
+                .orElseThrow(() -> new IllegalStateException("잘못된 하이라이트입니다."));
+
+        Integer bookId = highlight.getBookId();
+
+        commentRepository.delete(comment);
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/teams/" + teamId + "/books/" + bookId,
+                new StompResponse<>(
+                        MessageType.COMMENT_DELETED,
+                        teamId,
+                        bookId,
+                        commentId
+                )
+        );
+    }
+
 
     public ReadingResponse.EmoticonCountDTO toggleEmoticon(Integer commentId, Integer teamId, Integer userId, EmojiType emojiType) {
 
@@ -261,9 +318,9 @@ public class ReadingService {
                         highlights.stream()
                                 .map(h -> ReadingResponse.HighlightDTO.builder()
                                         .id(h.getId())
-                                        .userId(userId)
-                                        .teamId(req.getTeamId())
-                                        .bookId(req.getBookId())
+                                        .userId(h.getUserId())
+                                        .teamId(h.getTeamId())
+                                        .bookId(h.getBookId())
                                         .spineIndex(h.getSpineIndex())
                                         .cfi(h.getCfi())
                                         .text(h.getText())

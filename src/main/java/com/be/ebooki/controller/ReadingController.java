@@ -64,7 +64,18 @@ public class ReadingController {
                 readingService.createHighlight(req, userId, teamId)
         );
     }
+    /** 하이라이트 삭제 */
+    @DeleteMapping("/teams/{teamId}/highlights/{highlightId}")
+    public ResponseEntity<Void> deleteHighlight(
+            @PathVariable Integer teamId,
+            @PathVariable Integer highlightId
+    ) {
+        Integer userId = userService.getCurrentUserId();
 
+        readingService.deleteHighlight(highlightId, userId, teamId);
+
+        return ResponseEntity.noContent().build();
+    }
     /** 댓글 생성 */
     @PostMapping("/{teamId}/comments")
     public ResponseEntity<ReadingResponse.CommentDTO> createComment(
@@ -75,6 +86,18 @@ public class ReadingController {
         return ResponseEntity.ok(
                 readingService.createComment(req, userId, teamId)
         );
+    }
+    /** 댓글 삭제 */
+    @DeleteMapping("/teams/{teamId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Integer teamId,
+            @PathVariable Integer commentId
+    ) {
+        Integer userId = userService.getCurrentUserId();
+
+        readingService.deleteComment(commentId, userId, teamId);
+
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/emoticons")
