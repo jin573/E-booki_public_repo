@@ -33,9 +33,9 @@ public class ReadingService {
     private final UserBookProgressRepository userBookProgressRepository;
 
 
-    public ReadingResponse.HighlightListDTO getHighlights(Integer bookId) {
+    public ReadingResponse.HighlightListDTO getHighlights(Integer bookId, Integer teamId) {
 
-        var highlightDTOs = highlightRepository.findByBookId(bookId)
+        var highlightDTOs = highlightRepository.findByBookIdAndTeamId(bookId, teamId)
                 .stream()
                 .map(h -> ReadingResponse.HighlightDTO.builder()
                         .id(h.getId())
@@ -46,6 +46,7 @@ public class ReadingService {
                         .cfi(h.getCfi())
                         .text(h.getText())
                         .color(h.getColor())
+                        .createdAt(h.getCreatedAt())
                         .build())
                 .toList();
 
@@ -127,7 +128,9 @@ public class ReadingService {
                     .spineIndex(req.getSpineIndex())
                     .cfi(req.getCfi())
                     .text(req.getText())
-                    .color(HighlightColor.valueOf(req.getColor()))
+                    .color(HighlightColor.valueOf(req.getColor())
+
+                    )
                     .build());
 
 
@@ -140,6 +143,7 @@ public class ReadingService {
                 .cfi(highlight.getCfi())
                 .text(highlight.getText())
                 .color(highlight.getColor())
+                .createdAt(highlight.getCreatedAt())
                 .build();
 
         //STOMP 얹기
@@ -149,6 +153,35 @@ public class ReadingService {
 
         return highlightDTO;
     }
+    /** 하이라이트 삭제 */
+    @Transactional
+    public void deleteHighlight(Integer highlightId, Integer userId, Integer teamId) {
+
+        Highlight highlight = highlightRepository.findById(highlightId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 하이라이트입니다."));
+
+        if (!highlight.getTeamId().equals(teamId)) {
+            throw new IllegalArgumentException("팀이 일치하지 않습니다.");
+        }
+        if (!highlight.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("하이라이트 삭제 권한이 없습니다.");
+        }
+
+        Integer bookId = highlight.getBookId();
+
+        highlightRepository.delete(highlight);
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/teams/" + teamId + "/books/" + bookId,
+                new StompResponse<>(
+                        MessageType.HIGHLIGHT_DELETED,
+                        teamId,
+                        bookId,
+                        highlightId
+                )
+        );
+    }
+
 
     /** 댓글 생성 */
     public ReadingResponse.CommentDTO createComment(
@@ -172,7 +205,6 @@ public class ReadingService {
                 .userId(userId)
                 .highlightId(highlight.getId())
                 .text(req.getText())
-                .createdAt(LocalDateTime.now())
                 .build();
 
         commentRepository.save(comment);
@@ -195,6 +227,90 @@ public class ReadingService {
         );
         return commentDTO;
     }
+    /** 댓글 수정 */
+    @Transactional
+    public ReadingResponse.CommentDTO updateComment(
+            Integer commentId,
+            ReadingRequest.UpdateCommentDTO req,
+            Integer userId,
+            Integer teamId
+    ) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+
+        Highlight highlight = highlightRepository.findById(comment.getHighlightId())
+                .orElseThrow(() -> new IllegalStateException("잘못된 하이라이트입니다."));
+
+        if (!highlight.getTeamId().equals(teamId)) {
+            throw new IllegalArgumentException("팀이 일치하지 않습니다.");
+        }
+
+        if (!comment.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("댓글 수정 권한이 없습니다.");
+        }
+
+        comment.setText(req.getText());
+
+        Integer bookId = highlight.getBookId();
+
+        ReadingResponse.CommentDTO commentDTO =
+                ReadingResponse.CommentDTO.builder()
+                        .id(comment.getId())
+                        .userId(comment.getUserId())
+                        .highlightId(comment.getHighlightId())
+                        .bookId(bookId)
+                        .text(comment.getText())
+                        .createdAt(comment.getCreatedAt())
+                        .emoticons(buildEmoticonCount(comment.getId()))
+                        .myEmoticon(buildUserEmoticon(comment.getId(), userId))
+                        .build();
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/teams/" + teamId + "/books/" + bookId,
+                new StompResponse<>(
+                        MessageType.COMMENT_UPDATED,
+                        teamId,
+                        bookId,
+                        commentDTO
+                )
+        );
+
+        return commentDTO;
+    }
+
+
+    /** 댓글 삭제 */
+    @Transactional
+    public void deleteComment(Integer commentId, Integer userId, Integer teamId) {
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+
+        Highlight highlight = highlightRepository.findById(comment.getHighlightId())
+                .orElseThrow(() -> new IllegalStateException("잘못된 하이라이트입니다."));
+
+        if (!highlight.getTeamId().equals(teamId)) {
+            throw new IllegalArgumentException("팀이 일치하지 않습니다.");
+        }
+        if (!comment.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("댓글 삭제 권한이 없습니다.");
+        }
+
+        Integer bookId = highlight.getBookId();
+
+        commentRepository.delete(comment);
+
+        simpMessagingTemplate.convertAndSend(
+                "/topic/teams/" + teamId + "/books/" + bookId,
+                new StompResponse<>(
+                        MessageType.COMMENT_DELETED,
+                        teamId,
+                        bookId,
+                        commentId
+                )
+        );
+    }
+
 
     public ReadingResponse.EmoticonCountDTO toggleEmoticon(Integer commentId, Integer teamId, Integer userId, EmojiType emojiType) {
 
@@ -215,6 +331,15 @@ public class ReadingService {
 
         if (existing.isPresent()) {
             emoticonRepository.delete(existing.get());
+            simpMessagingTemplate.convertAndSend(
+                    "/topic/teams/" + teamId + "/books/" + bookId,
+                    new StompResponse<>(
+                            MessageType.EMOJI_DELETED,
+                            teamId,
+                            bookId,
+                            buildEmoticonCount(commentId)
+                    )
+            );
         } else {
             Emoticon newEmoji = new Emoticon();
             newEmoji.setUserId(userId);
@@ -247,7 +372,10 @@ public class ReadingService {
 
         //  팀에 속한 전체 하이라이트 조회 (지금은 전부)
         List<Highlight> highlights =
-                highlightRepository.findAllByBookId(req.getBookId());
+                highlightRepository.findAllByBookIdAndTeamId(
+                        req.getBookId(),
+                        req.getTeamId()
+                );
 
         return ReadingResponse.ReadingEntryDTO.builder()
                 .bookId(book.getId())
@@ -261,9 +389,9 @@ public class ReadingService {
                         highlights.stream()
                                 .map(h -> ReadingResponse.HighlightDTO.builder()
                                         .id(h.getId())
-                                        .userId(userId)
-                                        .teamId(req.getTeamId())
-                                        .bookId(req.getBookId())
+                                        .userId(h.getUserId())
+                                        .teamId(h.getTeamId())
+                                        .bookId(h.getBookId())
                                         .spineIndex(h.getSpineIndex())
                                         .cfi(h.getCfi())
                                         .text(h.getText())

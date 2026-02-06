@@ -28,6 +28,7 @@ public class TeamService {
     @Value("${app.base-url}")
     private String baseUrl;
     private final UserPlanService userPlanService;
+    private final UserBookProgressService userBookProgressService;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final TeamUserRepository teamUserRepository;
@@ -226,10 +227,13 @@ public class TeamService {
             //팀 가입
 
             joinTeamAndUser(userId, teamInfoDTO.getTeamData());
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
+
             //독서 횟수 차감
             userPlanService.consumeOneBook(user);
+            userBookProgressService.createProgress(
+                    userId,
+                    teamInfoDTO.getTeamData().getBookId() // 팀의 책
+            );
 
             List<TeamResponse.TeamUserDTO> teamUserDTOS = teamUserRepository.findAllByTeamId(teamInfoDTO.getTeamData().getId())
                     .stream()

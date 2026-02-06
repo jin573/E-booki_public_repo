@@ -52,6 +52,12 @@ public class UserBookProgress {
         this.rating = rating;
     }
 
+    public void updateProgress(Integer spineIndex, String cfi) {
+        this.spineIndex = spineIndex;
+        this.cfi = cfi;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     //미리 업데이트용
     public void updateRating(Integer rating) {
         this.rating = rating;

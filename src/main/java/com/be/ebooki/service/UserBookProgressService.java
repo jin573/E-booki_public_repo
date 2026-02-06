@@ -50,5 +50,35 @@ public class UserBookProgressService {
 
         return userBookProgressRepository.save(progress);
     }
+
+    @Transactional
+    public void updateProgress(Integer userId,
+                               Integer bookId,
+                               Integer spineIndex,
+                               String cfi) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
+
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 책"));
+
+        UserBookProgress progress =
+                userBookProgressRepository.findByUserAndBook(user, book)
+                        .orElseGet(() ->
+                                userBookProgressRepository.save(
+                                        UserBookProgress.builder()
+                                                .user(user)
+                                                .book(book)
+                                                .spineIndex(spineIndex)
+                                                .cfi(cfi)
+                                                .build()
+                                )
+                        );
+
+        progress.updateProgress(spineIndex, cfi);
+    }
+
+
 }
 
