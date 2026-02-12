@@ -21,4 +21,5 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
 """)
     List<Comment> findAllByBookId(@Param("bookId") Integer bookId);
 
+    void deleteAllByHighlightId(Integer highlightId);
 }

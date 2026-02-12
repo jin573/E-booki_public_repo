@@ -23,7 +23,7 @@ public class UserBookProgress {
     @JoinColumn(name = "book_id")
     private Book book;
 
-    private Integer percentage;
+    private Double percent;
 
     @Column(length = 500)
     private String cfi;
@@ -38,24 +38,25 @@ public class UserBookProgress {
     @Builder
     public UserBookProgress(User user,
                             Book book,
-                            Integer percentage,
+                            Double percent,
                             String cfi,
                             Integer spineIndex,
                             LocalDateTime updatedAt,
                             Integer rating) {
         this.user = user;
         this.book = book;
-        this.percentage = percentage;
+        this.percent = percent;
         this.cfi = cfi;
         this.spineIndex = spineIndex;
         this.updatedAt = updatedAt;
         this.rating = rating;
     }
 
-    public void updateProgress(Integer spineIndex, String cfi) {
+    public void updateProgress(Integer spineIndex, String cfi, Double percent) {
         this.spineIndex = spineIndex;
         this.cfi = cfi;
         this.updatedAt = LocalDateTime.now();
+        this.percent = percent;
     }
 
     //미리 업데이트용
