@@ -6,9 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface HighlightRepository extends JpaRepository<Highlight, Integer> {
-    List<Highlight> findByBookId(Integer bookId);
-    List<Highlight> findByBookIdAndUserId(Integer bookId, Integer userId);
-
     List<Highlight> findAllByBookId(Integer bookId);
+    List<Highlight> findByBookIdAndTeamId(Integer bookId, Integer teamId);
+    List<Highlight> findAllByBookIdAndTeamId(Integer bookId, Integer teamId);
 
 }

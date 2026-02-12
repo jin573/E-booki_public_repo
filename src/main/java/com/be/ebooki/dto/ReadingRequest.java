@@ -28,6 +28,12 @@ public class ReadingRequest {
     }
 
     @Data
+    public static class UpdateCommentDTO {
+        private String text;
+    }
+
+
+    @Data
     public static class ReadingEntryDTO {
         private Integer teamId;
         private Integer bookId;

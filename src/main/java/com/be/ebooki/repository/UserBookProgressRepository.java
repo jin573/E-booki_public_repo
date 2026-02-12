@@ -48,4 +48,7 @@ public interface UserBookProgressRepository
     Double findAverageRatingByBookId(@Param("bookId") Integer bookId);
 
     boolean existsByUserAndBook(User user, Book book);
+
+    Optional<UserBookProgress> findByUserAndBook(User user, Book book);
+
 }

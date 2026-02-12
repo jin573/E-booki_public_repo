@@ -21,6 +21,7 @@ public class ReadingResponse {
         private String cfi;
         private String text;
         private HighlightColor color;
+        private LocalDateTime createdAt;
     }
 
     @Data

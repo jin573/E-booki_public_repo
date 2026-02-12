@@ -36,9 +36,10 @@ public class ReadingController {
 
     @GetMapping("/{bookId}/highlights")
     public ResponseEntity<ReadingResponse.HighlightListDTO> getHighlights(
-            @PathVariable Integer bookId
+            @PathVariable Integer bookId,
+            @RequestParam Integer teamId
     ) {
-        return ResponseEntity.ok(readingService.getHighlights(bookId));
+        return ResponseEntity.ok(readingService.getHighlights(bookId, teamId));
     }
 
     //특정 하이라이트 클릭 시 댓글 + 이모티콘 개수 조회
@@ -64,7 +65,18 @@ public class ReadingController {
                 readingService.createHighlight(req, userId, teamId)
         );
     }
+    /** 하이라이트 삭제 */
+    @DeleteMapping("/teams/{teamId}/highlights/{highlightId}")
+    public ResponseEntity<Void> deleteHighlight(
+            @PathVariable Integer teamId,
+            @PathVariable Integer highlightId
+    ) {
+        Integer userId = userService.getCurrentUserId();
 
+        readingService.deleteHighlight(highlightId, userId, teamId);
+
+        return ResponseEntity.noContent().build();
+    }
     /** 댓글 생성 */
     @PostMapping("/{teamId}/comments")
     public ResponseEntity<ReadingResponse.CommentDTO> createComment(
@@ -76,6 +88,33 @@ public class ReadingController {
                 readingService.createComment(req, userId, teamId)
         );
     }
+    /** 댓글 삭제 */
+    @DeleteMapping("/teams/{teamId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Integer teamId,
+            @PathVariable Integer commentId
+    ) {
+        Integer userId = userService.getCurrentUserId();
+
+        readingService.deleteComment(commentId, userId, teamId);
+
+        return ResponseEntity.noContent().build();
+    }
+    /** 댓글 수정 */
+    @PatchMapping("/teams/{teamId}/comments/{commentId}")
+    public ResponseEntity<ReadingResponse.CommentDTO> updateComment(
+            @PathVariable Integer teamId,
+            @PathVariable Integer commentId,
+            @RequestBody ReadingRequest.UpdateCommentDTO req
+    ) {
+        Integer userId = userService.getCurrentUserId();
+
+        ReadingResponse.CommentDTO updatedComment =
+                readingService.updateComment(commentId,req, userId, teamId);
+
+        return ResponseEntity.ok(updatedComment);
+    }
+
 
     @PostMapping("/emoticons")
     public ResponseEntity<ReadingResponse.EmoticonCountDTO> toggle(
