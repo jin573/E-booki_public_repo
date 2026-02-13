@@ -167,8 +167,21 @@ public class ReadingService {
             throw new IllegalArgumentException("하이라이트 삭제 권한이 없습니다.");
         }
 
+        
+
         Integer bookId = highlight.getBookId();
 
+        //댓글 조회
+        List<Comment> comments = commentRepository.findByHighlightId(highlightId);
+
+        //이모티콘 삭제
+        for (Comment comment : comments) {
+            emoticonRepository.deleteAllByCommentId(comment.getId());
+        }
+
+        //하이라이트에 달린 댓글 삭제
+        commentRepository.deleteAllByHighlightId(highlightId);
+        //하이라이트 삭제
         highlightRepository.delete(highlight);
 
         simpMessagingTemplate.convertAndSend(
@@ -297,6 +310,8 @@ public class ReadingService {
         }
 
         Integer bookId = highlight.getBookId();
+
+        emoticonRepository.deleteAllByCommentId(comment.getId());
 
         commentRepository.delete(comment);
 

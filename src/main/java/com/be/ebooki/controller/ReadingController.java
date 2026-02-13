@@ -4,6 +4,7 @@ import com.be.ebooki.dto.ReadingRequest;
 import com.be.ebooki.dto.ReadingResponse;
 import com.be.ebooki.enums.EmojiType;
 import com.be.ebooki.service.ReadingService;
+import com.be.ebooki.service.UserBookProgressService;
 import com.be.ebooki.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ public class ReadingController {
 
     private final ReadingService readingService;
     private final UserService userService;
+    private final UserBookProgressService progressService;
 
     //진입 시 마지막 위치 조회
     @GetMapping("/entry")
@@ -120,8 +122,7 @@ public class ReadingController {
     public ResponseEntity<ReadingResponse.EmoticonCountDTO> toggle(
             @RequestBody ReadingRequest.CreateEmoticonsDTO req) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Integer userId = (Integer) authentication.getPrincipal();
+        Integer userId = userService.getCurrentUserId();
 
         EmojiType emoji = EmojiType.valueOf(req.getType().toUpperCase());
 
@@ -129,6 +130,25 @@ public class ReadingController {
                 readingService.toggleEmoticon(req.getCommentId(), req.getTeamId(), userId, emoji)
         );
     }
+
+    /** 진행도 업데이트 */
+    @PostMapping("/books/{bookId}/progress")
+    public ResponseEntity<Void> updateProgress(
+            @PathVariable Integer bookId,
+            @RequestBody ReadingRequest.ProgressRequest dto
+    ) {
+        Integer userId = userService.getCurrentUserId();
+
+        progressService.updateProgress(
+                userId,
+                bookId,
+                dto.getSpineIndex(),
+                dto.getCfi(),
+                dto.getPercent()
+        );
+        return ResponseEntity.ok().build();
+    }
+
 
 }
 

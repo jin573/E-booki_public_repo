@@ -15,5 +15,5 @@ public interface EmoticonRepository extends JpaRepository<Emoticon, Integer> {
             Integer userId,
             EmojiType emoji
     );
-
+    void deleteAllByCommentId(Integer commentId);
 }
