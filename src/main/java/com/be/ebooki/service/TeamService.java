@@ -9,6 +9,7 @@ import com.be.ebooki.dto.BookResponse;
 import com.be.ebooki.dto.TeamResponse;
 import com.be.ebooki.enums.UserColor;
 import com.be.ebooki.repository.*;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -53,10 +54,10 @@ public class TeamService {
         //유효성 검증
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
-        userPlanService.validateActivePlan(user); //요금제 조회
+        //userPlanService.validateActivePlan(user); //요금제 조회
         Team team = createTeam(teamName, bookId); //팀 생성
         joinTeamAndUser(user.getId(), team.getId()); //팀 생성 후 유저 추가
-        userPlanService.consumeOneBook(user);// 요금제 차감
+        //userPlanService.consumeOneBook(user);// 요금제 차감
         String inviteUrl = inviteTeam(userId, team.getId()); //초대 링크 생성
         return TeamResponse.TeamInfoDTO.builder()
                 .teamData(TeamResponse.TeamDTO.from(team))
@@ -109,7 +110,7 @@ public class TeamService {
         user.getTeamUsers().add(teamUser); //유저가 속한 팀을 조회하기 위해 추가
     }
 
-    //팀 생성 시 링크 생성
+    /**팀 생성 시 링크 생성*/
     private String inviteTeam(Integer userId, Integer teamId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
@@ -128,7 +129,7 @@ public class TeamService {
         return baseUrl + "/api/teams/invite?token=" + inviteKey;
     }
 
-    //링크 재생성
+    /**링크 재생성*/
     @Transactional
     public String reissueInvite(Integer userId, Integer teamId) {
         User user = userRepository.findById(userId)
@@ -139,7 +140,7 @@ public class TeamService {
 
         boolean isMember = teamUserRepository.existsByTeamIdAndUserId(teamId, userId);
         if (!isMember) {
-            throw new IllegalStateException("팀원만 초대 링크를 재생성할 수 있습니다.");
+            throw new AccessDeniedException("팀원만 초대 링크를 재생성할 수 있습니다.");
         }
 
         if (team.getBook() == null) {
@@ -160,6 +161,7 @@ public class TeamService {
         return baseUrl + "/api/teams/invite?token=" + newToken;
     }
 
+    /** 팀 정보만 제공*/
     public TeamResponse.TeamInfoDTO getTeamInfoByToken(String token) {
         String inviteToken = redisService.getValues("invite:token:"+token);
 
@@ -190,7 +192,7 @@ public class TeamService {
     public TeamResponse.TeamInfoDTO acceptInvite(Integer userId, String token) {
         //유효성 검증
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
+                .orElseThrow(() -> new IllegalStateException("존재하지 않는 사용자입니다."));
 
         //팀 정보 검사
         TeamResponse.TeamInfoDTO teamInfoDTO = getTeamInfoByToken(token);
@@ -217,11 +219,11 @@ public class TeamService {
                 throw new IllegalStateException("팀원은 4명까지 가능합니다.");
             }
             //요금제 조회
-            userPlanService.validateActivePlan(user);
+            //userPlanService.validateActivePlan(user);
             //팀 가입
             joinTeamAndUser(userId, teamInfoDTO.getTeamData().getId());
             //독서 횟수 차감
-            userPlanService.consumeOneBook(user);
+            //userPlanService.consumeOneBook(user);
             userBookProgressService.createProgress(
                     userId,
                     teamInfoDTO.getTeamData().getBookId() // 팀의 책
@@ -306,7 +308,7 @@ public class TeamService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
 
         if(!teamUserRepository.existsByTeamIdAndUserId(teamId, userId)){
-            throw new IllegalStateException("팀에 속한 멤버가 아닙니다.");
+            throw new AccessDeniedException("팀에 속한 멤버가 아닙니다.");
         }
 
         return TeamResponse.TeamInfoDTO.builder()

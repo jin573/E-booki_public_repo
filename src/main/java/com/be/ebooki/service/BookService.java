@@ -124,5 +124,4 @@ public class BookService {
                 .bookImage(book.getBookImage())
                 .build();
     }
-
 }
