@@ -38,4 +38,12 @@ public class ReadingRequest {
         private Integer teamId;
         private Integer bookId;
     }
+
+    @Data
+    public static class ProgressRequest {
+
+        private Integer spineIndex;
+        private String cfi;
+        private Double percent;
+    }
 }

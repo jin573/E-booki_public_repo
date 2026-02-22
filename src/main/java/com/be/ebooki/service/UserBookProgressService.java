@@ -41,7 +41,7 @@ public class UserBookProgressService {
         UserBookProgress progress = UserBookProgress.builder()
                 .user(user)
                 .book(book)
-                .percentage(0)
+                .percent(0.0)
                 .cfi(null)
                 .spineIndex(0)
                 .updatedAt(LocalDateTime.now())
@@ -55,7 +55,8 @@ public class UserBookProgressService {
     public void updateProgress(Integer userId,
                                Integer bookId,
                                Integer spineIndex,
-                               String cfi) {
+                               String cfi,
+                               Double percent) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
@@ -72,11 +73,12 @@ public class UserBookProgressService {
                                                 .book(book)
                                                 .spineIndex(spineIndex)
                                                 .cfi(cfi)
+                                                .percent(percent)
                                                 .build()
                                 )
                         );
 
-        progress.updateProgress(spineIndex, cfi);
+        progress.updateProgress(spineIndex, cfi, percent);
     }
 
 
