@@ -12,6 +12,7 @@ import com.be.ebooki.enums.Nickname;
 import com.be.ebooki.enums.UserType;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserService {
 
@@ -102,7 +104,7 @@ public class UserService {
     }
 
     @Transactional
-    public void updateProfileImage(Integer userId, String newImageKey){
+    public UserResponse.UserInfoDTO updateProfileImage(Integer userId, String newImageKey){
         if(!newImageKey.startsWith("images/profile/")){
             throw new IllegalArgumentException("잘못된 이미지 경로입니다.");
         }
@@ -116,10 +118,17 @@ public class UserService {
         if(oldImageKey != null
                 && !oldImageKey.equals(newImageKey)
                 && !oldImageKey.startsWith("images/default")) {
-            s3Service.deleteFile(oldImageKey);
+            try {
+                s3Service.deleteFile(oldImageKey);
+            } catch (Exception e) {
+                // 삭제 실패 시 로그만 남기고 진행 (DB 업데이트는 성공시키기 위함)
+                log.error("이전 프로필 이미지 삭제 실패: {}", oldImageKey, e);
+            }
         }
 
         user.updateProfileImage(newImageKey);
+
+        return UserResponse.UserInfoDTO.from(user, s3Service.getFileUrl(user.getProfileImage()));
     }
     public void logoutUser(String email) {
 
@@ -128,6 +137,14 @@ public class UserService {
     public void deleteUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다."));
+
+        //이미지도 삭제
+        String imageKey = user.getProfileImage();
+
+        if (imageKey != null && !imageKey.startsWith("images/default")) {
+            s3Service.deleteFile(imageKey);
+        }
+
         userRepository.delete(user);
 
     }
@@ -140,7 +157,8 @@ public class UserService {
                         .id(user.getId())
                         .email(user.getEmail())
                         .nickname(user.getNickname())
-                        .profileImage(user.getProfileImage())
+                        .profileImage(s3Service.getFileUrl(user.getProfileImage()))
+                        .userType(user.getUserType())
                         .build())
                 .collect(Collectors.toList());
     }
