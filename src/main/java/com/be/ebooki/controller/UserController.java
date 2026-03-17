@@ -109,6 +109,20 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    //프로필 변경
+    @PatchMapping("/update/profileImage")
+    public ResponseEntity<?> updateProfileImage(@RequestBody UserRequest.UpdateProfileImageDTO request){
+        Integer userId = userService.getCurrentUserId();
+
+        return ResponseEntity.ok(
+                UserResponse.UserResponseDTO.builder()
+                        .statusCode(200)
+                        .message("프로필 이미지 변경 성공")
+                        .data(userService.updateProfileImage(userId, request.getProfileImage()))
+                        .build()
+        );
+    }
+
     //test
     @GetMapping("/test")
     public ResponseEntity<String> testUser() {

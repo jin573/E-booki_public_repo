@@ -30,12 +30,12 @@ public class UserResponse {
         private String nickname;
         private String profileImage;
         private UserType userType;
-        public static UserInfoDTO from(User user) {
+        public static UserInfoDTO from(User user, String imageUrl) {
             return UserInfoDTO.builder()
                     .id(user.getId())
                     .email(user.getEmail())
                     .nickname(user.getNickname())
-                    .profileImage(user.getProfileImage())
+                    .profileImage(imageUrl)
                     .userType(user.getUserType())
                     .build();
         }
