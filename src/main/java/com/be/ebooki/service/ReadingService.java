@@ -383,7 +383,7 @@ public class ReadingService {
                 .orElseThrow(() -> new IllegalArgumentException("책 없음"));
 
         UserBookProgress progress =
-                userBookProgressRepository.findByUserIdAndBookId(userId, bookId)
+                userBookProgressRepository.findByUser_IdAndBook_Id(userId, bookId)
                         .orElseThrow(() -> new IllegalStateException("독서 진행 정보 없음"));
 
         //  팀에 속한 전체 하이라이트 조회 (지금은 전부)

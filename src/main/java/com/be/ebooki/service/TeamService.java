@@ -265,7 +265,7 @@ public class TeamService {
                 .map(team -> {
 
                     UserBookProgress progress = userBookProgressRepository
-                            .findByUserIdAndBookId(userId, team.getBook().getId())
+                            .findByUser_IdAndBook_Id(userId, team.getBook().getId())
                             .orElse(null);
 
                     int percentage = progress != null
