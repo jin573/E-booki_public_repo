@@ -103,11 +103,15 @@ public class KakaoPayService {
     @Transactional
     public KakaoApproveResponse approveResponse(String pgToken, String tid) {
 
+        // READY 상태 Payment 조회
+        Payment payment = paymentRepository.findByPgTid(tid)
+                .orElseThrow(() -> new IllegalStateException("결제 정보가 존재하지 않습니다."));
+
         Map<String, String> parameters = new HashMap<>();
         parameters.put("cid", payProperties.getCid());
         parameters.put("tid", tid);
         parameters.put("partner_order_id", "ORDER_ID");
-        parameters.put("partner_user_id", "USER_ID");
+        parameters.put("partner_user_id", payment.getUser().getId().toString());
         parameters.put("pg_token", pgToken);
 
         HttpEntity<Map<String, String>> requestEntity =
@@ -119,9 +123,6 @@ public class KakaoPayService {
                 KakaoApproveResponse.class
         );
 
-        // READY 상태 Payment 조회
-        Payment payment = paymentRepository.findByPgTid(tid)
-                .orElseThrow(() -> new IllegalStateException("결제 정보가 존재하지 않습니다."));
 
         // 승인 처리 (update)
         payment.approve(
