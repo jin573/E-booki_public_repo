@@ -109,7 +109,7 @@ public class TeamController {
         return ResponseEntity.ok(responseDTO);
     }
 
-    @GetMapping
+    @GetMapping("/list")
     public ResponseEntity<TeamResponse.TeamListResponse> getMyTeams() {
         Integer userId = userService.getCurrentUserId();
 
