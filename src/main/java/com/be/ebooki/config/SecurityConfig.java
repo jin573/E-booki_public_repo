@@ -35,7 +35,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() //cors
                         .requestMatchers("/auth/signup", "/auth/login", "/auth/reissue"
                         ,"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/h2-console/**"
-                                ,"/auth/login/kakao/**", "/ws/**", "/api/teams/invite").permitAll() // ws 및 api/reading 임시 허용
+                                ,"/auth/login/kakao/**", "/ws/**", "/api/teams/invite", "/presigned/profile").permitAll() // ws 및 api/reading 임시 허용
                         .requestMatchers("/auth/**").authenticated() // test 같은 건 인증 필요
                         .requestMatchers("/api/**").authenticated()
                         .requestMatchers("/api/teams/invite/join").authenticated()
