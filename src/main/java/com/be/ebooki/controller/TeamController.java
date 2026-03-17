@@ -36,32 +36,32 @@ public class TeamController {
         Integer userId = userService.getCurrentUserId();
 
         TeamResponse.TeamInfoDTO teamInfoDTO = teamService.initTeam(userId, teamInitDTO.getTeamName(), teamInitDTO.getBookId());
-        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId(),userId);
-        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
+        BookResponse.BookPreviewDTO bookPreviewDTO =bookService.getBookPreview(teamInfoDTO.getTeamData().getBookId());
+
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO>builder()
                 .statusCode(200)
                 .message("팀 생성 성공 및 링크 생성 성공")
                 .teamData(teamInfoDTO)
-                .bookData(bookDTO)
+                .bookData(bookPreviewDTO)
                 .build();
         return ResponseEntity.ok(responseDTO);
     }
 
+    /**누구나 접속 가능*/
     @GetMapping("/invite")
     @Operation(
             summary = "초대 링크 접속"
     )
     public ResponseEntity<?> inviteUser(@RequestParam String token){
 
-        Integer userId = userService.getCurrentUserId();
+        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.getTeamInfoByToken(token);
+        BookResponse.BookPreviewDTO bookPreviewDTO =bookService.getBookPreview(teamInfoDTO.getTeamData().getBookId());
 
-        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.getTeamInfo(token);
-        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId(),userId);
-
-        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO>builder()
                 .statusCode(200)
                 .message("팀, 도서, 팀원 정보 불러오기 성공")
                 .teamData(teamInfoDTO)
-                .bookData(bookDTO)
+                .bookData(bookPreviewDTO)
                 .build();
         return ResponseEntity.ok(responseDTO);
     }
@@ -75,13 +75,13 @@ public class TeamController {
         Integer userId = userService.getCurrentUserId();
         //팀 검사
         TeamResponse.TeamInfoDTO teamInfoDTO = teamService.acceptInvite(userId, token); //팀에 올바르게 추가 된 경우
-        BookResponse.BookDetailDTO bookDTO = bookService.getBookDetail(teamInfoDTO.getTeamData().getBookId(),userId); //도서를 가져와서 추가하기
+        BookResponse.BookPreviewDTO bookPreviewDTO =bookService.getBookPreview(teamInfoDTO.getTeamData().getBookId()); //도서를 가져와서 추가하기
 
-        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookDetailDTO>builder()
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO> responseDTO = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO>builder()
                 .statusCode(200)
                 .message("팀원 추가 성공")
                 .teamData(teamInfoDTO)
-                .bookData(bookDTO)
+                .bookData(bookPreviewDTO)
                 .build();
 
         return ResponseEntity.ok(responseDTO);
@@ -119,6 +119,25 @@ public class TeamController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{teamId}")
+    @Operation(
+            summary = "팀 상세 조회"
+    )
+    public ResponseEntity<TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO>> getTeam(@PathVariable Integer teamId) {
+        Integer userId = userService.getCurrentUserId();
+        TeamResponse.TeamInfoDTO teamInfoDTO = teamService.getTeamInfo(teamId, userId);
+        BookResponse.BookPreviewDTO bookPreviewDTO =bookService.getBookPreview(teamInfoDTO.getTeamData().getBookId());
+
+        TeamResponse.TeamResponseDTO<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO> responseDTO
+                = TeamResponse.TeamResponseDTO.<TeamResponse.TeamInfoDTO, BookResponse.BookPreviewDTO>builder()
+                .statusCode(200)
+                .message("팀 상세 정보 가져오기 성공")
+                .teamData(teamInfoDTO)
+                .bookData(bookPreviewDTO)
+                .build();
+
+        return ResponseEntity.ok(responseDTO);
+    }
     @PutMapping("/{teamId}")
     public ResponseEntity<Void> updateTeamName(
             @PathVariable Integer teamId,
@@ -130,5 +149,4 @@ public class TeamController {
 
         return ResponseEntity.ok().build();
     }
-
 }
