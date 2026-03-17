@@ -16,9 +16,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +34,8 @@ public class UserService {
     private final JwtTokenProvider jwtTokenProvider;
 
     private final KakaoProperties kakaoProperties;
+    private final S3Service s3Service;
+
 
     //sign up
     public UserResponse.UserInfoDTO signupUser(UserRequest.UserSignupDTO signupDTO) {
@@ -42,15 +48,29 @@ public class UserService {
         String randomNickname = generateNickname();
         //비밀번호 암호화
         String encodePassword = passwordEncoder.encode(signupDTO.getPassword());
+        //프로필 이미지
+        String profileImageKey = null;
+
+        if(signupDTO.getProfileImage() != null && !signupDTO.getProfileImage().isEmpty()){
+            profileImageKey = signupDTO.getProfileImage();
+            if(!profileImageKey.startsWith("images/profile/")){
+                throw new IllegalArgumentException("잘못된 프로필 이미지 경로입니다.");
+            }
+        }else{
+            profileImageKey = getRandomProfileImage(); //랜덤 url
+        }
 
         //Entity로 변환 후 저장
         User user = signupDTO.toEntity();
         user.updateNickname(randomNickname);
         user.updatePassword(encodePassword);//비밀번호를 암호화하여 업데이트
         user.updateUserType(UserType.LOCAL);//유저 타입 지정
+        user.updateProfileImage(profileImageKey);
         User registeredUser = userRepository.save(user);
 
-        return UserResponse.UserInfoDTO.from(registeredUser);
+        return UserResponse.UserInfoDTO.from(registeredUser,
+                s3Service.getFileUrl(registeredUser.getProfileImage())
+        );
     }
 
     public UserResponse.UserLoginDTO loginUser(UserRequest.UserLoginDTO userLoginDTO) {
@@ -67,7 +87,7 @@ public class UserService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
         //이메일과 비밀번호를 통해 유저 정보 가져오기
-        UserResponse.UserInfoDTO userInfoDTO = UserResponse.UserInfoDTO.from(user);
+        UserResponse.UserInfoDTO userInfoDTO = UserResponse.UserInfoDTO.from(user, s3Service.getFileUrl(user.getProfileImage()));
 
         //토큰 생성
         String accessToken = jwtTokenProvider.generateToken(user.getEmail(), user.getId(), jwtProperties.getAccessTokenExpiration());
@@ -81,6 +101,26 @@ public class UserService {
                 .build();
     }
 
+    @Transactional
+    public void updateProfileImage(Integer userId, String newImageKey){
+        if(!newImageKey.startsWith("images/profile/")){
+            throw new IllegalArgumentException("잘못된 이미지 경로입니다.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다."));
+
+        //프로필 변경 시 이전 이미지 삭제 (단, default image 제외)
+        String oldImageKey = user.getProfileImage();
+
+        if(oldImageKey != null
+                && !oldImageKey.equals(newImageKey)
+                && !oldImageKey.startsWith("images/default")) {
+            s3Service.deleteFile(oldImageKey);
+        }
+
+        user.updateProfileImage(newImageKey);
+    }
     public void logoutUser(String email) {
 
     }
@@ -154,7 +194,7 @@ public class UserService {
         }
 
         //userInfoDTO 생성
-        UserResponse.UserInfoDTO userInfoDTO = UserResponse.UserInfoDTO.from(user);
+        UserResponse.UserInfoDTO userInfoDTO = UserResponse.UserInfoDTO.from(user, s3Service.getFileUrl(user.getProfileImage()));
 
         return UserResponse.UserLoginDTO.builder()
                 .accessToken(accessToken)
@@ -168,10 +208,22 @@ public class UserService {
                 kakaoProfile.getKakaoAccount().getEmail(),
                 passwordEncoder.encode(UUID.randomUUID().toString()),
                 generateNickname(),
-                "url",
+                getRandomProfileImage(),//랜덤 이미지로 설정
                 UserType.KAKAO//추후 default url로 변경
         );
         return userRepository.save(newUser);
+    }
+
+    private String getRandomProfileImage() {
+        List<String> images = List.of(
+                "images/default/profile1.png",
+                "images/default/profile2.png",
+                "images/default/profile3.png",
+                "images/default/profile4.png",
+                "images/default/profile5.png"
+        );
+
+        return images.get(new Random().nextInt(images.size()));
     }
 
 

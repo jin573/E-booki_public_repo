@@ -57,4 +57,10 @@ public class UserRequest {
         private String accessToken;
         private String refreshToken;
     }
+
+    //프로필 이미지 변경
+    @Getter
+    public static class UpdateProfileImageDTO {
+        private String profileImage;
+    }
 }
