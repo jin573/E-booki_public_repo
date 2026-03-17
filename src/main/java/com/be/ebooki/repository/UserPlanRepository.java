@@ -17,6 +17,8 @@ public interface UserPlanRepository extends JpaRepository<UserPlan, Long> {
     // 현재 사용 중 요금제가 있는지 확인
     boolean existsByUserAndStatus(User user, UserPlanStatus status);
 
+    Optional<UserPlan> findByUserIdAndStatus(Integer userId, UserPlanStatus status);
+
     // 현재 사용 중 요금제 조회
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<UserPlan> findByUserAndStatus(User user, UserPlanStatus status);

@@ -49,6 +49,8 @@ public interface UserBookProgressRepository
 
     boolean existsByUserAndBook(User user, Book book);
 
+    List<UserBookProgress> findByUserIdAndPercent(Integer userId, Double percent);
+
     Optional<UserBookProgress> findByUserAndBook(User user, Book book);
 
 }
