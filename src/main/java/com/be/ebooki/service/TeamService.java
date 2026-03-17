@@ -289,7 +289,7 @@ public class TeamService {
                                             .stream()
                                             .map(teamUser -> TeamResponse.MemberProfileDTO.builder()
                                                     .profileImage(teamUser.getUser().getProfileImage())
-                                                    .userColor(teamUser.getUserColor().name())
+                                                    .userColor(teamUser.getUserColor() != null ? teamUser.getUserColor().name() : null) // 여기
                                                     .build())
                                             .toList()
                             )
