@@ -25,12 +25,13 @@ public class ReadingController {
     //진입 시 마지막 위치 조회
     @GetMapping("/entry")
     public ResponseEntity<ReadingResponse.ReadingEntryDTO> getReadingEntry(
-            @RequestBody ReadingRequest.ReadingEntryDTO readingEntry
+            @RequestParam Integer teamId,
+            @RequestParam Integer bookId
     ) {
         Integer userId = userService.getCurrentUserId();
 
         ReadingResponse.ReadingEntryDTO response =
-                readingService.getReadingEntry(userId,readingEntry);
+                readingService.getReadingEntry(userId, teamId, bookId);
 
         return ResponseEntity.ok(response);
     }
@@ -118,8 +119,9 @@ public class ReadingController {
     }
 
 
-    @PostMapping("/emoticons")
+    @PostMapping("/{teamId}/emoticons")
     public ResponseEntity<ReadingResponse.EmoticonCountDTO> toggle(
+            @PathVariable Integer teamId,
             @RequestBody ReadingRequest.CreateEmoticonsDTO req) {
 
         Integer userId = userService.getCurrentUserId();
@@ -127,7 +129,7 @@ public class ReadingController {
         EmojiType emoji = EmojiType.valueOf(req.getType().toUpperCase());
 
         return ResponseEntity.ok(
-                readingService.toggleEmoticon(req.getCommentId(), req.getTeamId(), userId, emoji)
+                readingService.toggleEmoticon(req.getCommentId(), teamId, userId, emoji)
         );
     }
 

@@ -80,8 +80,6 @@ public class BookService {
                     .map(h -> ReadingResponse.ReadingTimelineItemDTO.builder()
                             .type("HIGHLIGHT")
                             .text(h.getText())
-                            .spineIndex(h.getSpineIndex())
-                            .cfi(h.getCfi())
                             .createdAt(h.getCreatedAt())
                             .build()
                     )
