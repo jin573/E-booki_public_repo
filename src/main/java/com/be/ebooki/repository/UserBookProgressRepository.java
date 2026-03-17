@@ -26,5 +26,5 @@ public interface UserBookProgressRepository
     List<UserBookProgress> findByUserIdAndPercent(Integer userId, Double percent);
 
     Optional<UserBookProgress> findByUserAndBook(User user, Book book);
-
+    Optional<UserBookProgress> findByUser_IdAndBook_Id(Integer userId, Integer bookId);
 }
