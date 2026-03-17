@@ -226,7 +226,7 @@ public class TeamService {
             userPlanService.validateActivePlan(user);
             //팀 가입
 
-            joinTeamAndUser(userId, teamInfoDTO.getTeamData());
+            joinTeamAndUser(userId, teamId);
 
             //독서 횟수 차감
             userPlanService.consumeOneBook(user);
