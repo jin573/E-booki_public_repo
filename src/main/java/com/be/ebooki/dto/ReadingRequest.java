@@ -11,7 +11,6 @@ public class ReadingRequest {
         private Integer spineIndex;
         private String cfi;
         private String text;
-        private String color;
     }
 
     @Data
@@ -22,7 +21,6 @@ public class ReadingRequest {
 
     @Data
     public static class CreateEmoticonsDTO {
-        private Integer teamId;
         private Integer commentId;
         private String type;
     }
@@ -30,13 +28,6 @@ public class ReadingRequest {
     @Data
     public static class UpdateCommentDTO {
         private String text;
-    }
-
-
-    @Data
-    public static class ReadingEntryDTO {
-        private Integer teamId;
-        private Integer bookId;
     }
 
     @Data

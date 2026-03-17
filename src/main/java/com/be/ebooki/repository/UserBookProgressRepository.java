@@ -13,32 +13,6 @@ import java.util.Optional;
 public interface UserBookProgressRepository
         extends JpaRepository<UserBookProgress, Integer> {
 
-    //1) 나의 책 rating 조회
-    @Query("""
-            SELECT ubp.rating 
-            FROM UserBookProgress ubp
-            WHERE ubp.user.id = :userId
-              AND ubp.book.id = :bookId
-            """)
-    Optional<Integer> findMyRating(Integer userId, Integer bookId);
-
-
-    //2) 팀원들의 rating 목록 조회
-    @Query("""
-            SELECT ubp.rating
-            FROM UserBookProgress ubp
-            WHERE ubp.user.id IN :userIds
-              AND ubp.book.id = :bookId
-              AND ubp.rating IS NOT NULL
-            """)
-    List<Integer> findRatingsByUserIdsAndBook(List<Integer> userIds, Integer bookId);
-
-
-    Optional<UserBookProgress> findByUserIdAndBookId(
-            Integer userId,
-            Integer bookId
-    );
-
     @Query("""
     select avg(ubp.rating)
     from UserBookProgress ubp

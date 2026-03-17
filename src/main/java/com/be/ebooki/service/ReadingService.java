@@ -29,6 +29,8 @@ public class ReadingService {
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final TeamService teamService;
     private final UserRepository userRepository;
+
+    private final TeamUserRepository teamUserRepository;
     private final BookRepository bookRepository;
     private final UserBookProgressRepository userBookProgressRepository;
 
@@ -118,21 +120,19 @@ public class ReadingService {
         if (!teamService.validateTeamBook(teamId, req.getBookId())) {
             throw new IllegalArgumentException("팀에 속하지 않은 책입니다.");
         }
-
-
+        // TeamUser에서 색 조회
+        TeamUser teamUser = teamUserRepository.findByTeam_IdAndUser_Id(teamId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("팀원이 아닙니다."));
         Highlight highlight = highlightRepository.save(
                 Highlight.builder()
-                    .userId(userId)
-                    .teamId(teamId)
-                    .bookId(req.getBookId())
-                    .spineIndex(req.getSpineIndex())
-                    .cfi(req.getCfi())
-                    .text(req.getText())
-                    .color(HighlightColor.valueOf(req.getColor())
-
-                    )
-                    .build());
-
+                        .userId(userId)
+                        .teamId(teamId)
+                        .bookId(req.getBookId())
+                        .spineIndex(req.getSpineIndex())
+                        .cfi(req.getCfi())
+                        .text(req.getText())
+                        .color(HighlightColor.valueOf(teamUser.getUserColor().name()))
+                        .build());
 
         ReadingResponse.HighlightDTO highlightDTO = ReadingResponse.HighlightDTO.builder()
                 .id(highlight.getId())
@@ -373,23 +373,24 @@ public class ReadingService {
     @Transactional(readOnly = true)
     public ReadingResponse.ReadingEntryDTO getReadingEntry(
             Integer userId,
-            ReadingRequest.ReadingEntryDTO req
+            Integer teamId,
+            Integer bookId
     ) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
 
-        Book book = bookRepository.findById(req.getBookId())
+        Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("책 없음"));
 
         UserBookProgress progress =
-                userBookProgressRepository.findByUserIdAndBookId(userId, req.getBookId())
+                userBookProgressRepository.findByUserIdAndBookId(userId, bookId)
                         .orElseThrow(() -> new IllegalStateException("독서 진행 정보 없음"));
 
         //  팀에 속한 전체 하이라이트 조회 (지금은 전부)
         List<Highlight> highlights =
                 highlightRepository.findAllByBookIdAndTeamId(
-                        req.getBookId(),
-                        req.getTeamId()
+                        bookId,
+                        teamId
                 );
 
         return ReadingResponse.ReadingEntryDTO.builder()

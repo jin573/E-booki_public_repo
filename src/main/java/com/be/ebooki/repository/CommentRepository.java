@@ -9,7 +9,6 @@ import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, Integer> {
     List<Comment> findByHighlightId(Integer highlightId);
-    List<Comment> findByUserIdAndHighlightIdIn(Integer userId, List<Integer> highlightIds);
     @Query("""
     select c
     from Comment c

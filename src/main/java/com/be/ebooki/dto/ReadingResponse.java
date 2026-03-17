@@ -1,6 +1,7 @@
 package com.be.ebooki.dto;
 
 import com.be.ebooki.enums.HighlightColor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -40,6 +41,7 @@ public class ReadingResponse {
     public static class CommentDTO {
         private Integer id;
         private Integer userId;
+        @JsonIgnore
         private Integer bookId;
         private Integer highlightId;
         private String text;
@@ -71,12 +73,7 @@ public class ReadingResponse {
     public static class ReadingTimelineItemDTO {
 
         private String type; // "HIGHLIGHT" | "COMMENT"
-
         private String text;
-
-        private Integer spineIndex; // 하이라이트만
-        private String cfi;         // 하이라이트만
-
         private LocalDateTime createdAt;
     }
 
