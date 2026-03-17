@@ -32,4 +32,7 @@ public class Book {
 
     @Column(name="rating")
     private Double rating;
+
+    @Column(name="category", length = 50)
+    private String category;  // 예: "문학", "경제", "자기계발" 등
 }

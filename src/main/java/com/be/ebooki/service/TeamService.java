@@ -268,7 +268,7 @@ public class TeamService {
                             .orElse(null);
 
                     int percentage = progress != null
-                            ? progress.getPercentage()
+                            ? progress.getPercent().intValue()
                             : 0;
 
                     boolean alreadyRated = progress != null && progress.getRating() != null;
@@ -283,10 +283,13 @@ public class TeamService {
                             .teamName(team.getTeamName())
                             .bookTitle(team.getBook().getTitle())
                             .bookImage(team.getBook().getBookImage())
-                            .memberProfileImages(
+                            .memberProfiles(
                                     teamUserRepository.findAllByTeamId(team.getId())
                                             .stream()
-                                            .map(teamUser -> teamUser.getUser().getProfileImage())
+                                            .map(teamUser -> TeamResponse.MemberProfileDTO.builder()
+                                                    .profileImage(teamUser.getUser().getProfileImage())
+                                                    .userColor(teamUser.getUserColor().name())
+                                                    .build())
                                             .toList()
                             )
                             .progressPercentage(percentage)

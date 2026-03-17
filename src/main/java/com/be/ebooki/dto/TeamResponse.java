@@ -73,7 +73,7 @@ public class TeamResponse {
         private String bookTitle;
         private String bookImage;
 
-        private List<String> memberProfileImages;
+        private List<MemberProfileDTO> memberProfiles;
 
         private Integer progressPercentage;
 
@@ -95,6 +95,13 @@ public class TeamResponse {
     public static class ReissueTeamUrlResponse{
         private Integer teamId;
         private String newUrl;
+    }
+
+    @Getter
+    @Builder
+    public static class MemberProfileDTO {
+        private String profileImage;
+        private String userColor;
     }
 
 
